@@ -105,19 +105,18 @@ void setup() {
   pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
   debugMode = (digitalRead(debugPin) == LOW); // Check if the pin is LOW (switch closed)
 
+
+
+  xDetectionsEventGroup = xEventGroupCreate();
+
+
+  // Wait for everything to stabilize
+  // delay(60000); // Use this delay if starting at the same time as the Jetson
+  
   xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 4, NULL);
   xTaskCreate(SensorBox, "SensorBox", 128, NULL, 3, NULL);
   xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 2, &readDetTaskHandle);
   xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 1, &processDetTaskHandle);
-
-  xDetectionsEventGroup = xEventGroupCreate();
-
-   if (debugMode) {
-    xTaskCreate(printDebug, "printDebug", 1000, NULL, 5, &printTaskHandle);
-   }
-  // Wait for everything to stabilize
-  // delay(60000); // Use this delay if starting at the same time as the Jetson
-  delay(2000); // Use this delay if starting after Jetson is set up and has been running
 
 }
 
@@ -207,9 +206,14 @@ void MotorBoxStateManagement(void *pvParameters) {
 }
 
 void SensorBox(void *pvParameters){
-  Serial.println("Sensor Task");
+  for (;;) {
+    Serial.println("Sensor Task");
+    vTaskDelay(3000 / portTICK_PERIOD_MS); // On for 3 seconds
+    // Serial.println("Task 2 has ended");
+  }
 }
 
+  
 
 
 void readDetTask(void *pvParameters) {
@@ -225,7 +229,7 @@ void readDetTask(void *pvParameters) {
             
             vTaskDelay(pdMS_TO_TICKS(50));
             Serial.println("ReadTask");
-            vTaskDelay(pdMS_TO_TICKS(50));
+            vTaskDelay(pdMS_TO_TICKS(5000));
             xEventGroupSetBits(xDetectionsEventGroup, BIT_NEW_DATA_AVAILABLE);
     
             
@@ -262,7 +266,7 @@ void processDetTask(void *pvParameters) {
           if ((uxBits & BIT_NEW_DATA_AVAILABLE) != 0) {
             vTaskDelay(pdMS_TO_TICKS(50));
             Serial.println("ProcessTask");
-            vTaskDelay(pdMS_TO_TICKS(50));
+            vTaskDelay(pdMS_TO_TICKS(5000));
             // Process the data in dataBuffer
             // Serial.println("Received Detections");
             // // Serial.println(dataBuffer);
@@ -280,7 +284,7 @@ void printDebug(void *pvParameters) {
         if (printDebugFlag) {
             vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
             Serial.println("PrintDebug");
-            vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
+            vTaskDelay(pdMS_TO_TICKS(5000)); // FreeRTOS delay
         }
 
         // Yield to other tasks
@@ -440,15 +444,20 @@ void emergencyStopISR() {
 void wait_for_start() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Waiting to Start");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  xSemaphoreTake(stateMutex, portMAX_DELAY);
   currentState = GET_BIG_BOXES;
+  xSemaphoreGive(stateMutex);
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  
 }
 
 void get_big_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Getting Big Boxes");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = GET_SMALL_BOXES;
+  xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+
 }
 
 void get_small_boxes() {
@@ -564,8 +573,8 @@ void push_button() {
 void done() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Done");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
-  currentState =  DONE;
+  vTaskDelay(10000 / portTICK_PERIOD_MS);
+  currentState =  WAIT_FOR_START;
 }
 
 
