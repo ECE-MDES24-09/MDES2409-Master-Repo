@@ -1,10 +1,9 @@
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>
+#include <event_groups.h>
 #include <DetectionsBuffer.h>
 #include <Dictionary.h>
 #include <SoftwareSerial.h>
-#define BUFFER_SIZE 512
-#define MAX_DETECTION_LENGTH 15
 
 
 /**
@@ -24,16 +23,16 @@
 
 // Enum for different robot states
 enum RobotState {
-  WAITING_TO_START,
+  WAIT_FOR_START,
   GET_BIG_BOXES,
   GET_SMALL_BOXES,
   DEPOSIT_BIG_BOXES,
   DEPOSIT_SMALL_BOXES,
-  FOLLOW_LINE,
+  FOLLOW_LINE, // Needs Counter
   GO_TO_RED_ZONE,
   GO_TO_BLUE_ZONE,
   GO_TO_GREEN_ZONE,
-  PICK_UP_ROCKETS,
+  GET_ROCKETS,
   CROSS_GAP,
   DEPOSIT_ROCKETS,
   PUSH_BUTTON,
@@ -42,32 +41,47 @@ enum RobotState {
   EMERGENCY_STOP
 };
 
-// Task Handlers
-TaskHandle_t readDetTaskHandle;
-TaskHandle_t processDetTaskHandle;
-TaskHandle_t printTaskHandle;
-SemaphoreHandle_t stateMutex;
+RobotState currentState = WAIT_FOR_START;
+int Follow_Line_Counter = 0;
+
+
+
+// Obj Detection Variables
+
+#define BUFFER_SIZE 512 // Maximum size of String that can be passed from Jetson
+#define MAX_CLASSNAME_LENGTH 15 // Maximum size of the class name char array
+#define MAX_DIRECTION_LENGTH 6 // Maximum size of the direction char array
 
 char dataBuffer[BUFFER_SIZE];
-
-volatile bool newDataAvailable = false;
 unsigned long previousMillis = 0;  // Stores the last time a request was made
 const long interval = 10000;  
-volatile bool printDebugFlag = false;
-volatile bool readDetectionsFlag = true;
-int ignore_list[11];
-bool ignorebBox, ignoresBox, ignoresZone, ignorerZone, ignorebZone, ignoregZone = false;
-
 
 Dictionary &class_names_dict = *(new Dictionary(11));
 Dictionary &dir_names_dict = *(new Dictionary(2));
 Dictionary &class_names_rev = *(new Dictionary(11));
 
 
-RobotState currentState = WAITING_TO_START;
+// Debug Mode Setup
+const int debugPin = 10; // Debug mode toggle pin
+bool debugMode = false; // Global flag for debug mode
+volatile bool printDebugFlag = false;
 
 
-void TaskStateManagement(void *pvParameters);
+// RTOS Vals
+
+// Task Handlers
+TaskHandle_t readDetTaskHandle;
+TaskHandle_t processDetTaskHandle;
+TaskHandle_t printTaskHandle;
+// Mutex for RobotState
+SemaphoreHandle_t stateMutex;
+// Event Group for Detections
+#define BIT_NEW_DATA_AVAILABLE (1 << 0)
+#define BIT_READ_DETECTIONS    (1 << 1)
+EventGroupHandle_t xDetectionsEventGroup;
+// Tasks
+void MotorBoxStateManagement(void *pvParameters);
+void SensorBox(void *pvParameters);
 void readDetTask(void *pvParameters);
 void processDetTask(void *pvParameters);
 void printDebug(void *pvParameters);
@@ -88,10 +102,19 @@ void setup() {
   // Create a mutex for state variable
   stateMutex = xSemaphoreCreateMutex();
 
-  xTaskCreate(TaskStateManagement, "StateManagement", 128, NULL, 4, NULL);
-  xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
-  xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
-  xTaskCreate(printDebug, "printDebug", 1000, NULL, 1, &printTaskHandle);
+  pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
+  debugMode = (digitalRead(debugPin) == LOW); // Check if the pin is LOW (switch closed)
+
+  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 4, NULL);
+  xTaskCreate(SensorBox, "SensorBox", 128, NULL, 3, NULL);
+  xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 2, &readDetTaskHandle);
+  xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 1, &processDetTaskHandle);
+
+  xDetectionsEventGroup = xEventGroupCreate();
+
+   if (debugMode) {
+    xTaskCreate(printDebug, "printDebug", 1000, NULL, 5, &printTaskHandle);
+   }
 
   // Wait for everything to stabilize
   // delay(60000); // Use this delay if starting at the same time as the Jetson
@@ -110,25 +133,64 @@ void loop() {
 
 
 
-void TaskStateManagement(void *pvParameters) {
+void MotorBoxStateManagement(void *pvParameters) {
   for (;;) {
     switch (currentState) {
-      case WAITING_TO_START:
-        // Code to handle waiting to start
+      case WAIT_FOR_START:
+        // Code to handle waiting for start
+        // Green Light stuff, yada yada
+        wait_for_start();
         break;
-      case GET_BIG_BLOCKS:
+      case GET_BIG_BOXES:
         // Code for getting big blocks
+        get_big_boxes();
         break;
-      case GET_SMALL_BLOCKS:
+      case GET_SMALL_BOXES:
         // Code for getting small blocks
+        get_small_boxes();
         break;
-      case FOLLOW_YELLOW_LINE:
+      case DEPOSIT_BIG_BOXES:
+        // Code for depositing big blocks
+        deposit_big_boxes();
+        break;
+      case DEPOSIT_SMALL_BOXES:
+        // Code for depositing small blocks
+        deposit_small_boxes();
+        break;
+      case FOLLOW_LINE:
         // Code to follow the yellow line
+        follow_line();
         break;
       case GO_TO_RED_ZONE:
         // Code to go to the red zone
         break;
-      // ... add cases for other states as needed ...
+      case GO_TO_BLUE_ZONE:
+        // Code to go to the blue zone
+        break;
+      case GO_TO_GREEN_ZONE:
+        // Code to go to the green zone
+        break;
+      case GET_ROCKETS:
+        // Code for getting rockets
+        break;
+      case DEPOSIT_ROCKETS:
+        // Code for depositing rockets
+        break;
+      case CROSS_GAP:
+        // Code to cross the gap
+        break;
+      case PUSH_BUTTON:
+        // Code to push stop timer button
+        break;
+      case DISPLAY_LOGO:
+        // Code to display the logo
+        break;
+      case DONE:
+        // Code for stopping when all tasks completed
+        break;
+      case EMERGENCY_STOP:
+        // Code for emergency stop
+        break;
       default:
         break;
     }
@@ -136,15 +198,28 @@ void TaskStateManagement(void *pvParameters) {
   }
 }
 
+void SensorBox(void *pvParameters){
+  Serial.println("Sensor Task");
+}
+
+
 
 void readDetTask(void *pvParameters) {
     for (;;) { // Infinite loop for the task
-        if (readDetectionsFlag) {
+      EventBits_t uxBits = xEventGroupWaitBits(
+              xDetectionsEventGroup,
+              BIT_READ_DETECTIONS,
+              pdTRUE,    // Clear BIT_READ_DETECTIONS on exit.
+              pdFALSE,   // Wait for just BIT_READ_DETECTIONS.
+              portMAX_DELAY); // Wait indefinitely.
 
-          vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
-
-          Serial.println("ReadTask");
-          readDetectionsFlag = false;
+          if ((uxBits & BIT_READ_DETECTIONS) != 0) {
+            
+            vTaskDelay(pdMS_TO_TICKS(50));
+            Serial.println("ReadTask");
+            vTaskDelay(pdMS_TO_TICKS(50));
+            xEventGroupSetBits(xDetectionsEventGroup, BIT_NEW_DATA_AVAILABLE);
+    
             
             // Serial2.println("REQUEST");
 
@@ -159,8 +234,6 @@ void readDetTask(void *pvParameters) {
             // if (Serial2.available()) {
             //     String data = Serial2.readStringUntil('\n');
             //     data.toCharArray(dataBuffer, BUFFER_SIZE);
-            //     newDataAvailable = true; // Set the flag to indicate new data
-            //     readDetectionsFlag = false;
             // }
         }
 
@@ -171,28 +244,35 @@ void readDetTask(void *pvParameters) {
 
 void processDetTask(void *pvParameters) {
     for (;;) {
-      if (newDataAvailable) {
-        vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
-        Serial.println("ProcessTask");
-        // Process the data in dataBuffer
-        // Serial.println("Received Detections");
-        // // Serial.println(dataBuffer);
-        // processDetections(dataBuffer);
-        // newDataAvailable = false; // Reset the flag after processing
-        // printDebugFlag = true;
+      EventBits_t uxBits = xEventGroupWaitBits(
+              xDetectionsEventGroup,
+              BIT_NEW_DATA_AVAILABLE,
+              pdTRUE,    // Clear BIT_NEW_DATA_AVAILABLE on exit.
+              pdFALSE,   // Wait for just BIT_NEW_DATA_AVAILABLE.
+              portMAX_DELAY); // Wait indefinitely.
+
+          if ((uxBits & BIT_NEW_DATA_AVAILABLE) != 0) {
+            vTaskDelay(pdMS_TO_TICKS(50));
+            Serial.println("ProcessTask");
+            vTaskDelay(pdMS_TO_TICKS(50));
+            // Process the data in dataBuffer
+            // Serial.println("Received Detections");
+            // // Serial.println(dataBuffer);
+            // processDetections(dataBuffer);
+            xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
         }
         // Yield to other tasks
         taskYIELD();
     }
 }
 
+
 void printDebug(void *pvParameters) {
     for (;;) {
         if (printDebugFlag) {
             vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
-            printDetections();
-            printDebugFlag = false; // Reset the flag
-            readDetectionsFlag = true;
+            Serial.println("PrintDebug");
+            vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
         }
 
         // Yield to other tasks
@@ -218,14 +298,14 @@ void processDetections(char data[]) {
 
 
 void parseDetection(char* detection) {
-    char class_name[MAX_DETECTION_LENGTH];
+    char class_name[MAX_CLASSNAME_LENGTH];
     int class_key, dir_key;
     float confidence;
     float depth_mm;
     float depth_in;
     float x, y, z;
     float horizontal_angle, timestamp;
-    char direction[6];
+    char direction[MAX_DIRECTION_LENGTH];
     char* token;
     char* rest = detection;
 
@@ -282,8 +362,8 @@ void parseDetection(char* detection) {
     String class_n = class_names_dict[ck];
     String dir_n = dir_names_dict[dk];
 
-    class_n.toCharArray(class_name, MAX_DETECTION_LENGTH);
-    dir_n.toCharArray(direction, 6);
+    class_n.toCharArray(class_name, MAX_CLASSNAME_LENGTH);
+    dir_n.toCharArray(direction, MAX_DIRECTION_LENGTH);
 
     Detection newDetection(class_name, confidence,timestamp, depth_mm, x, y, z, horizontal_angle, direction);
 
@@ -349,7 +429,7 @@ void emergencyStopISR() {
 
 
 
-void wait_to_start() {
+void wait_for_start() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Waiting to Start");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
@@ -373,6 +453,7 @@ void get_small_boxes() {
 void follow_line() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Following Line");
+  Follow_Line_Counter++;
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = FOLLOW_LINE;
 }
