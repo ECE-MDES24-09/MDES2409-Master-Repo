@@ -115,11 +115,9 @@ void setup() {
    if (debugMode) {
     xTaskCreate(printDebug, "printDebug", 1000, NULL, 5, &printTaskHandle);
    }
-
   // Wait for everything to stabilize
   // delay(60000); // Use this delay if starting at the same time as the Jetson
   delay(2000); // Use this delay if starting after Jetson is set up and has been running
-
 
 }
 
@@ -163,33 +161,43 @@ void MotorBoxStateManagement(void *pvParameters) {
         break;
       case GO_TO_RED_ZONE:
         // Code to go to the red zone
+        go_to_red_zone();
         break;
       case GO_TO_BLUE_ZONE:
         // Code to go to the blue zone
+        go_to_blue_zone();
         break;
       case GO_TO_GREEN_ZONE:
         // Code to go to the green zone
+        go_to_green_zone();
         break;
       case GET_ROCKETS:
         // Code for getting rockets
+        get_rockets();
         break;
       case DEPOSIT_ROCKETS:
         // Code for depositing rockets
+        deposit_rockets();
         break;
       case CROSS_GAP:
         // Code to cross the gap
+        cross_gap();
         break;
       case PUSH_BUTTON:
         // Code to push stop timer button
+        push_button();
         break;
       case DISPLAY_LOGO:
         // Code to display the logo
+        display_logo();
         break;
       case DONE:
         // Code for stopping when all tasks completed
+        done();
         break;
       case EMERGENCY_STOP:
         // Code for emergency stop
+        emergency_stop();
         break;
       default:
         break;
@@ -453,9 +461,27 @@ void get_small_boxes() {
 void follow_line() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Following Line");
-  Follow_Line_Counter++;
   vTaskDelay(5000 / portTICK_PERIOD_MS);
-  currentState = FOLLOW_LINE;
+  switch (Follow_Line_Counter) {
+    case 0:
+      currentState = GO_TO_RED_ZONE;
+      Follow_Line_Counter++;
+      break;
+    case 1:
+      currentState = GO_TO_GREEN_ZONE;
+      Follow_Line_Counter++;
+      break;
+    case 2:
+      currentState = CROSS_GAP;
+      Follow_Line_Counter++;
+      break;
+    case 3:
+      currentState = DEPOSIT_ROCKETS;
+      Follow_Line_Counter++;
+      break;
+    default:
+        break;
+  }
 }
 
 
@@ -463,13 +489,89 @@ void deposit_big_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Depositing Big Boxes");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
-  currentState = DEPOSIT_SMALL_BOXES;
+  currentState = FOLLOW_LINE;
 }
 
 void deposit_small_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial.println("Depositing Small Boxes");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState = GO_TO_BLUE_ZONE;
+}
+
+
+void go_to_red_zone() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Going to Red Zone");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState = DEPOSIT_SMALL_BOXES;
+}
+
+void go_to_blue_zone() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Going to Blue Zone");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState = DEPOSIT_BIG_BOXES;
+}
+
+
+void go_to_green_zone() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Going to Green Zone");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState = GET_ROCKETS;
+}
+
+void get_rockets() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Getting Rockets");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = FOLLOW_LINE;
 }
 
+void deposit_rockets() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Depositing Rockets");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState =  PUSH_BUTTON;
+}
+
+
+void cross_gap() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Crossing Gap");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState = FOLLOW_LINE;
+}
+
+
+void display_logo() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Displaying Logo");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState =  PUSH_BUTTON;
+}
+
+
+void push_button() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Pushing Button");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState =  DONE;
+}
+
+
+void done() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("Done");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState =  DONE;
+}
+
+
+void emergency_stop() {
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial.println("EMERGENCY STOP");
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  currentState =  DONE;
+}
