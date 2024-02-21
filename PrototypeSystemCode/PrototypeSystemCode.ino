@@ -104,7 +104,7 @@ void setup() {
 
   pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
   debugMode = (digitalRead(debugPin) == LOW); // Check if the pin is LOW (switch closed)
-  Serial.println(debugMode);
+  // Serial.println(debugMode);
 
 
   xDetectionsEventGroup = xEventGroupCreate();
@@ -113,13 +113,13 @@ void setup() {
   // Wait for everything to stabilize
   // delay(60000); // Use this delay if starting at the same time as the Jetson
   
-  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 4, NULL);
-  xTaskCreate(SensorBox, "SensorBox", 128, NULL, 3, NULL);
+  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 3, NULL);
+  xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, NULL);
   xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 2, &readDetTaskHandle);
   xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 1, &processDetTaskHandle);
 
   if (debugMode) {
-    xTaskCreate(printDebug, "printDebug", 1000, NULL, 5, NULL);
+    xTaskCreate(printDebug, "printDebug", 128, NULL, 5, NULL);
    }
 
 }
@@ -581,6 +581,7 @@ void done() {
   Serial.println("Done");
   vTaskDelay(10000 / portTICK_PERIOD_MS);
   currentState =  WAIT_FOR_START;
+  Follow_Line_Counter = 0;
 }
 
 
