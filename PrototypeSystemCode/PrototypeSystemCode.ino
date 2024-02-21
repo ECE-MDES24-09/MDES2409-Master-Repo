@@ -474,7 +474,8 @@ void get_small_boxes() {
 
 void follow_line() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
-  Serial.println("Following Line");
+  Serial.print("Following Line.");
+  Serial.println(Follow_Line_Counter);
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   switch (Follow_Line_Counter) {
     case 0:
