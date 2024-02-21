@@ -68,6 +68,9 @@ volatile bool printDebugFlag = false;
 
 
 // RTOS Vals
+// Interupt Pin
+const int interruptPin = 2; // Example pin
+
 
 // Task Handlers
 TaskHandle_t readDetTaskHandle;
@@ -102,6 +105,8 @@ void setup() {
   // Create a mutex for state variable
   stateMutex = xSemaphoreCreateMutex();
 
+
+  pinMode(interruptPin, INPUT_PULLUP); // Set as input with pull-up
   pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
   debugMode = (digitalRead(debugPin) == LOW); // Check if the pin is LOW (switch closed)
   // Serial.println(debugMode);
@@ -113,10 +118,10 @@ void setup() {
   // Wait for everything to stabilize
   // delay(60000); // Use this delay if starting at the same time as the Jetson
   
-  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 3, NULL);
+  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, NULL);
   xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, NULL);
-  xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 2, &readDetTaskHandle);
-  xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 1, &processDetTaskHandle);
+  xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
+  xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
 
   if (debugMode) {
     xTaskCreate(printDebug, "printDebug", 128, NULL, 5, NULL);
@@ -233,7 +238,7 @@ void readDetTask(void *pvParameters) {
           if ((uxBits & BIT_READ_DETECTIONS) != 0) {
             
             vTaskDelay(pdMS_TO_TICKS(50));
-            Serial.println("ReadTask");
+            Serial.println("ReadDetTask");
             vTaskDelay(pdMS_TO_TICKS(5000));
             xEventGroupSetBits(xDetectionsEventGroup, BIT_NEW_DATA_AVAILABLE);
     
@@ -270,7 +275,7 @@ void processDetTask(void *pvParameters) {
 
           if ((uxBits & BIT_NEW_DATA_AVAILABLE) != 0) {
             vTaskDelay(pdMS_TO_TICKS(50));
-            Serial.println("ProcessTask");
+            Serial.println("ProcessDetTask");
             vTaskDelay(pdMS_TO_TICKS(5000));
             // Process the data in dataBuffer
             // Serial.println("Received Detections");
