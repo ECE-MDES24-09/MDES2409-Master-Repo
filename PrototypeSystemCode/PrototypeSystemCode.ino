@@ -68,8 +68,8 @@ volatile bool printDebugFlag = false;
 
 
 // RTOS Vals
-// Interupt Pin
-const int interruptPin = 2; // Example pin
+// Emergency Stop Pin
+const int emergencyStopPin  = 2; // Example pin
 
 
 // Task Handlers
@@ -106,11 +106,12 @@ void setup() {
   stateMutex = xSemaphoreCreateMutex();
 
 
-  pinMode(interruptPin, INPUT_PULLUP); // Set as input with pull-up
+  pinMode(emergencyStopPin, INPUT_PULLUP); // Set as input with pull-up
   pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
   debugMode = (digitalRead(debugPin) == LOW); // Check if the pin is LOW (switch closed)
   // Serial.println(debugMode);
 
+  attachInterrupt(digitalPinToInterrupt(emergencyStopPin), emergencyStopISR, FALLING);
 
   xDetectionsEventGroup = xEventGroupCreate();
 
