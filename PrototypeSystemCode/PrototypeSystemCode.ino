@@ -104,7 +104,7 @@ void setup() {
 
   pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
   debugMode = (digitalRead(debugPin) == LOW); // Check if the pin is LOW (switch closed)
-
+  Serial.println(debugMode);
 
 
   xDetectionsEventGroup = xEventGroupCreate();
@@ -118,7 +118,12 @@ void setup() {
   xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 2, &readDetTaskHandle);
   xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 1, &processDetTaskHandle);
 
+  if (debugMode) {
+    xTaskCreate(printDebug, "printDebug", 1000, NULL, 5, NULL);
+   }
+
 }
+
 
 
 // LEAVE THIS EMPTY. NO TOUCHING. AT ALL. UNDER ANY CIRCUMSTANCES. JUST DON'T DO IT.
@@ -281,11 +286,11 @@ void processDetTask(void *pvParameters) {
 
 void printDebug(void *pvParameters) {
     for (;;) {
-        if (printDebugFlag) {
-            vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
-            Serial.println("PrintDebug");
-            vTaskDelay(pdMS_TO_TICKS(5000)); // FreeRTOS delay
-        }
+        // if (printDebugFlag) {
+        vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
+        Serial.println("PrintDebug");
+        vTaskDelay(pdMS_TO_TICKS(5000)); // FreeRTOS delay
+        // }
 
         // Yield to other tasks
         taskYIELD();
