@@ -1,5 +1,6 @@
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>
+#include <task.h>
 #include <event_groups.h>
 #include <DetectionsBuffer.h>
 #include <Dictionary.h>
@@ -75,9 +76,14 @@ const int emergencyStopPin  = 2; // Example pin
 // Task Handlers
 TaskHandle_t readDetTaskHandle;
 TaskHandle_t processDetTaskHandle;
+TaskHandle_t MotorBoxTaskHandle;
+TaskHandle_t SensorBoxTaskHandle;
 TaskHandle_t printTaskHandle;
 // Mutex for RobotState
 SemaphoreHandle_t stateMutex;
+// Serial Mutex
+SemaphoreHandle_t bufferMutex;
+
 // Event Group for Detections
 #define BIT_NEW_DATA_AVAILABLE (1 << 0)
 #define BIT_READ_DETECTIONS    (1 << 1)
@@ -88,6 +94,7 @@ void SensorBox(void *pvParameters);
 void readDetTask(void *pvParameters);
 void processDetTask(void *pvParameters);
 void printDebug(void *pvParameters);
+
 
 
 void setup() {
@@ -102,9 +109,9 @@ void setup() {
   class_names_dict.jload(class_json);
   class_names_rev.jload(class_rev);
 
-  // Create a mutex for state variable
+  // Create a mutex for state variable and serial
   stateMutex = xSemaphoreCreateMutex();
-
+  bufferMutex = xSemaphoreCreateMutex();
 
   pinMode(emergencyStopPin, INPUT_PULLUP); // Set as input with pull-up
   pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
@@ -115,18 +122,30 @@ void setup() {
 
   xDetectionsEventGroup = xEventGroupCreate();
 
+  // xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
+  // xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
+  // xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
+  // xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
 
-  // Wait for everything to stabilize
-  // delay(60000); // Use this delay if starting at the same time as the Jetson
+  // if (debugMode) {
+  //   xTaskCreate(printDebug, "printDebug", 450, NULL, 5, NULL);
+  //  }
   
-  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, NULL);
-  xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, NULL);
-  xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
-  xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
-
   if (debugMode) {
-    xTaskCreate(printDebug, "printDebug", 128, NULL, 5, NULL);
+    xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 5, &SensorBoxTaskHandle);
+    xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 4, &readDetTaskHandle);
+    xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 3, &processDetTaskHandle);
+    xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 2, &MotorBoxTaskHandle);
+    xTaskCreate(printDebug, "printDebug", 200, NULL, 1, NULL);
+   } else {
+      xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
+      xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
+      xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
+      xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
    }
+
+  vTaskSuspend( readDetTaskHandle );
+  vTaskSuspend( processDetTaskHandle );
 
 }
 
@@ -218,9 +237,11 @@ void MotorBoxStateManagement(void *pvParameters) {
 
 void SensorBox(void *pvParameters){
   for (;;) {
-    Serial.println("Sensor Task");
-    vTaskDelay(3000 / portTICK_PERIOD_MS); // On for 3 seconds
-    // Serial.println("Task 2 has ended");
+    if (currentState != DONE || currentState != EMERGENCY_STOP) {
+      Serial.println("Sensor Task");
+      vTaskDelay(3000 / portTICK_PERIOD_MS); // On for 3 seconds
+
+    }
   }
 }
 
@@ -235,31 +256,28 @@ void readDetTask(void *pvParameters) {
               pdTRUE,    // Clear BIT_READ_DETECTIONS on exit.
               pdFALSE,   // Wait for just BIT_READ_DETECTIONS.
               portMAX_DELAY); // Wait indefinitely.
+          if (currentState != DONE || currentState != EMERGENCY_STOP) {
+            if ((uxBits & BIT_READ_DETECTIONS) != 0) {
+              
+              vTaskDelay(pdMS_TO_TICKS(50));
+              // Serial.println("RequestDetTask");
+              Serial2.println("REQUEST");
+              // Wait for a response with a timeout
+              unsigned long startTime = millis();
+              while (!Serial2.available() && millis() - startTime < 5000) {
+                  // Waiting for response with 5 seconds timeout
+                  vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to prevent blocking CPU
+              }
+              
+              // Read and store the response
+              if (Serial2.available()) {
+                  String data = Serial2.readStringUntil('\n');
+                  data.toCharArray(dataBuffer, BUFFER_SIZE);
+              }
 
-          if ((uxBits & BIT_READ_DETECTIONS) != 0) {
-            
-            vTaskDelay(pdMS_TO_TICKS(50));
-            Serial.println("ReadDetTask");
-            vTaskDelay(pdMS_TO_TICKS(5000));
-            xEventGroupSetBits(xDetectionsEventGroup, BIT_NEW_DATA_AVAILABLE);
-    
-            
-            // Serial2.println("REQUEST");
-
-            // // Wait for a response with a timeout
-            // unsigned long startTime = millis();
-            // while (!Serial2.available() && millis() - startTime < 5000) {
-            //     // Waiting for response with 5 seconds timeout
-            //     vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to prevent blocking CPU
-            // }
-            
-            // // Read and store the response
-            // if (Serial2.available()) {
-            //     String data = Serial2.readStringUntil('\n');
-            //     data.toCharArray(dataBuffer, BUFFER_SIZE);
-            // }
+              xEventGroupSetBits(xDetectionsEventGroup, BIT_NEW_DATA_AVAILABLE);
+          }
         }
-
         taskYIELD();
     }
 }
@@ -273,17 +291,18 @@ void processDetTask(void *pvParameters) {
               pdTRUE,    // Clear BIT_NEW_DATA_AVAILABLE on exit.
               pdFALSE,   // Wait for just BIT_NEW_DATA_AVAILABLE.
               portMAX_DELAY); // Wait indefinitely.
-
-          if ((uxBits & BIT_NEW_DATA_AVAILABLE) != 0) {
-            vTaskDelay(pdMS_TO_TICKS(50));
-            Serial.println("ProcessDetTask");
-            vTaskDelay(pdMS_TO_TICKS(5000));
-            // Process the data in dataBuffer
-            // Serial.println("Received Detections");
-            // // Serial.println(dataBuffer);
-            // processDetections(dataBuffer);
-            xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
-        }
+          if (currentState != DONE || currentState != EMERGENCY_STOP) {
+            if ((uxBits & BIT_NEW_DATA_AVAILABLE) != 0) {
+              vTaskDelay(pdMS_TO_TICKS(50));
+              // Serial.println("ProcessDetTask");
+              
+              // Process the data in dataBuffer
+              // Serial.println("Received Detections");
+              // Serial.println(dataBuffer);
+              processDetections(dataBuffer);
+              xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
+            }
+          }
         // Yield to other tasks
         taskYIELD();
     }
@@ -293,10 +312,26 @@ void processDetTask(void *pvParameters) {
 void printDebug(void *pvParameters) {
     for (;;) {
         // if (printDebugFlag) {
+      if (currentState != DONE || currentState != EMERGENCY_STOP) {
         vTaskDelay(pdMS_TO_TICKS(50)); // FreeRTOS delay
         Serial.println("PrintDebug");
-        vTaskDelay(pdMS_TO_TICKS(5000)); // FreeRTOS delay
-        // }
+        
+        // vTaskDelay(pdMS_TO_TICKS(2000)); // FreeRTOS delay
+        eTaskState readtaskState = eTaskGetState(readDetTaskHandle);
+        eTaskState processtaskState = eTaskGetState(processDetTaskHandle);
+        // Serial.println(readtaskState);
+        // Serial.println(processtaskState);
+
+        if ((readtaskState <= 2) || (processtaskState <= 2)){
+          Serial.println("DETECTIONS ON");
+            xSemaphoreTake(bufferMutex, portMAX_DELAY);
+            printDetections();
+            xSemaphoreGive(bufferMutex);
+
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(2000)); // FreeRTOS delay
+      }
 
         // Yield to other tasks
         taskYIELD();
@@ -311,7 +346,6 @@ void printDebug(void *pvParameters) {
 void processDetections(char data[]) {
     // Tokenize the data string into individual detections using strtok
     char* detection = strtok(data, ";");
-
     while (detection != NULL) {
         // Serial.println(detection);
         parseDetection(detection);
@@ -387,10 +421,11 @@ void parseDetection(char* detection) {
 
     class_n.toCharArray(class_name, MAX_CLASSNAME_LENGTH);
     dir_n.toCharArray(direction, MAX_DIRECTION_LENGTH);
-
+    
     Detection newDetection(class_name, confidence,timestamp, depth_mm, x, y, z, horizontal_angle, direction);
-
+    xSemaphoreTake(bufferMutex, portMAX_DELAY);
     addDetectionToBuffer(newDetection);
+    xSemaphoreGive(bufferMutex);
 
 }
 
@@ -401,17 +436,17 @@ void printDetections() {
     Serial.println("Closest Detection:");
     printDetection(closest);
 
-    // Print the latest detection 
-    Detection latest = getLatestDetection();
-    Serial.println("Latest Detection:");
-    printDetection(latest);
+    // // Print the latest detection 
+    // Detection latest = getLatestDetection();
+    // Serial.println("Latest Detection:");
+    // printDetection(latest);
 
-    // Loop through and print all detections
-    Serial.println("All Detections:");
-    for (int i = 0; i < getBufferSize(); i++) {
-        Detection d = getDetectionFromBuffer(i);
-        printDetection(d);
-    }
+    // // Loop through and print all detections
+    // Serial.println("All Detections:");
+    // for (int i = 0; i < getBufferSize(); i++) {
+    //     Detection d = getDetectionFromBuffer(i);
+    //     printDetection(d);
+    // }
 }
 
 
@@ -454,16 +489,20 @@ void emergencyStopISR() {
 
 void wait_for_start() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskSuspend( readDetTaskHandle );
+  vTaskSuspend( processDetTaskHandle );
+  Serial2.println("WAIT_FOR_START");
   Serial.println("Waiting to Start");
-  xSemaphoreTake(stateMutex, portMAX_DELAY);
   currentState = GET_BIG_BOXES;
-  xSemaphoreGive(stateMutex);
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   
 }
 
 void get_big_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskResume( readDetTaskHandle );
+  vTaskResume( processDetTaskHandle );
+  Serial2.println("GET_BIG_BOXES");
   Serial.println("Getting Big Boxes");
   currentState = GET_SMALL_BOXES;
   xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
@@ -473,6 +512,9 @@ void get_big_boxes() {
 
 void get_small_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskResume( readDetTaskHandle );
+  vTaskResume( processDetTaskHandle );
+  Serial2.println("GET_SMALL_BOXES");
   Serial.println("Getting Small Boxes");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = FOLLOW_LINE;
@@ -480,6 +522,10 @@ void get_small_boxes() {
 
 void follow_line() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskSuspend( readDetTaskHandle );
+  vTaskSuspend( processDetTaskHandle );
+  Serial2.print("FOLLOW_LINE.");
+  Serial2.println(Follow_Line_Counter);
   Serial.print("Following Line.");
   Serial.println(Follow_Line_Counter);
   vTaskDelay(5000 / portTICK_PERIOD_MS);
@@ -508,6 +554,9 @@ void follow_line() {
 
 void deposit_big_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskSuspend( readDetTaskHandle );
+  vTaskSuspend( processDetTaskHandle );
+  Serial2.println("DEPOSIT_BIG_BOXES");
   Serial.println("Depositing Big Boxes");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = FOLLOW_LINE;
@@ -515,6 +564,9 @@ void deposit_big_boxes() {
 
 void deposit_small_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskSuspend( readDetTaskHandle );
+  vTaskSuspend( processDetTaskHandle );
+  Serial2.println("DEPOSIT_SMALL_BOXES");
   Serial.println("Depositing Small Boxes");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = GO_TO_BLUE_ZONE;
@@ -523,6 +575,10 @@ void deposit_small_boxes() {
 
 void go_to_red_zone() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskResume( readDetTaskHandle );
+  vTaskResume( processDetTaskHandle );
+  xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
+  Serial2.println("GO_TO_RED_ZONE");
   Serial.println("Going to Red Zone");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = DEPOSIT_SMALL_BOXES;
@@ -530,6 +586,9 @@ void go_to_red_zone() {
 
 void go_to_blue_zone() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskResume( readDetTaskHandle );
+  vTaskResume( processDetTaskHandle );
+  Serial2.println("GO_TO_BLUE_ZONE");
   Serial.println("Going to Blue Zone");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = DEPOSIT_BIG_BOXES;
@@ -538,6 +597,10 @@ void go_to_blue_zone() {
 
 void go_to_green_zone() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskResume( readDetTaskHandle );
+  vTaskResume( processDetTaskHandle );
+  xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
+  Serial2.println("GO_TO_GREEN_ZONE");
   Serial.println("Going to Green Zone");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = GET_ROCKETS;
@@ -545,6 +608,7 @@ void go_to_green_zone() {
 
 void get_rockets() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial2.println("GET_ROCKETS");
   Serial.println("Getting Rockets");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = FOLLOW_LINE;
@@ -552,14 +616,17 @@ void get_rockets() {
 
 void deposit_rockets() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
+  Serial2.println("DEPOSIT_ROCKETS");
   Serial.println("Depositing Rockets");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
-  currentState =  PUSH_BUTTON;
+  currentState =  DISPLAY_LOGO;
 }
 
 
 void cross_gap() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial2.println("CROSS_GAP");
   Serial.println("Crossing Gap");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState = FOLLOW_LINE;
@@ -568,6 +635,7 @@ void cross_gap() {
 
 void display_logo() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial2.println("DISPLAY_LOGO");
   Serial.println("Displaying Logo");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState =  PUSH_BUTTON;
@@ -576,6 +644,7 @@ void display_logo() {
 
 void push_button() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial2.println("PUSH_BUTTON");
   Serial.println("Pushing Button");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState =  DONE;
@@ -584,15 +653,18 @@ void push_button() {
 
 void done() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial2.println("DONE");
   Serial.println("Done");
   vTaskDelay(10000 / portTICK_PERIOD_MS);
   currentState =  WAIT_FOR_START;
   Follow_Line_Counter = 0;
+
 }
 
 
 void emergency_stop() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  Serial2.println("EMERGENCY_STOP");
   Serial.println("EMERGENCY STOP");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   currentState =  DONE;
