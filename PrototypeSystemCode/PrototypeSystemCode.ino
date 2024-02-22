@@ -41,7 +41,7 @@ enum RobotState {
   DONE,
   EMERGENCY_STOP
 };
-
+RobotState prevState = WAIT_FOR_START;
 RobotState currentState = WAIT_FOR_START;
 int Follow_Line_Counter = 0;
 
@@ -79,6 +79,7 @@ TaskHandle_t processDetTaskHandle;
 TaskHandle_t MotorBoxTaskHandle;
 TaskHandle_t SensorBoxTaskHandle;
 TaskHandle_t printTaskHandle;
+TaskHandle_t debugTaskHandle;
 // Mutex for RobotState
 SemaphoreHandle_t stateMutex;
 // Serial Mutex
@@ -93,7 +94,7 @@ void MotorBoxStateManagement(void *pvParameters);
 void SensorBox(void *pvParameters);
 void readDetTask(void *pvParameters);
 void processDetTask(void *pvParameters);
-void printDebug(void *pvParameters);
+void DebugBox(void *pvParameters);
 
 
 
@@ -119,30 +120,31 @@ void setup() {
   // Serial.println(debugMode);
 
   attachInterrupt(digitalPinToInterrupt(emergencyStopPin), emergencyStopISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(debugPin), emergencyStopISR, FALLING);
 
   xDetectionsEventGroup = xEventGroupCreate();
 
-  // xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
-  // xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
-  // xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
-  // xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
+  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
+  xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
+  xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
+  xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
 
-  // if (debugMode) {
-  //   xTaskCreate(printDebug, "printDebug", 450, NULL, 5, NULL);
-  //  }
-  
   if (debugMode) {
-    xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 5, &SensorBoxTaskHandle);
-    xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 4, &readDetTaskHandle);
-    xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 3, &processDetTaskHandle);
-    xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 2, &MotorBoxTaskHandle);
-    xTaskCreate(printDebug, "printDebug", 200, NULL, 1, NULL);
-   } else {
-      xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
-      xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
-      xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
-      xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
+    xTaskCreate(DebugBox, "DebugBox", 200, NULL, 5, &debugTaskHandle);
    }
+  
+  // if (debugMode) {
+  //   xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 5, &SensorBoxTaskHandle);
+  //   xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 4, &readDetTaskHandle);
+  //   xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 3, &processDetTaskHandle);
+  //   xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 2, &MotorBoxTaskHandle);
+  //   xTaskCreate(DebugBox, "DebugBox", 200, NULL, 1, &debugTaskHandle);
+  //  } else {
+  //     xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
+  //     xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
+  //     xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
+  //     xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
+  //  }
 
   vTaskSuspend( readDetTaskHandle );
   vTaskSuspend( processDetTaskHandle );
@@ -162,6 +164,11 @@ void loop() {
 
 void MotorBoxStateManagement(void *pvParameters) {
   for (;;) {
+    if (currentState != prevState) {
+      xSemaphoreTake(bufferMutex, portMAX_DELAY);
+      clearBuffer();
+      xSemaphoreGive(bufferMutex);
+    }
     switch (currentState) {
       case WAIT_FOR_START:
         // Code to handle waiting for start
@@ -231,6 +238,7 @@ void MotorBoxStateManagement(void *pvParameters) {
       default:
         break;
     }
+    prevState = currentState;
     vTaskDelay(50 / portTICK_PERIOD_MS); // Adjust delay as needed
   }
 }
@@ -299,7 +307,9 @@ void processDetTask(void *pvParameters) {
               // Process the data in dataBuffer
               // Serial.println("Received Detections");
               // Serial.println(dataBuffer);
+              xSemaphoreTake(bufferMutex, portMAX_DELAY);
               processDetections(dataBuffer);
+              xSemaphoreGive(bufferMutex);
               xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
             }
           }
@@ -309,7 +319,7 @@ void processDetTask(void *pvParameters) {
 }
 
 
-void printDebug(void *pvParameters) {
+void DebugBox(void *pvParameters) {
     for (;;) {
         // if (printDebugFlag) {
       if (currentState != DONE || currentState != EMERGENCY_STOP) {
@@ -324,10 +334,7 @@ void printDebug(void *pvParameters) {
 
         if ((readtaskState <= 2) || (processtaskState <= 2)){
           Serial.println("DETECTIONS ON");
-            xSemaphoreTake(bufferMutex, portMAX_DELAY);
-            printDetections();
-            xSemaphoreGive(bufferMutex);
-
+          printDetections();
         }
         
         vTaskDelay(pdMS_TO_TICKS(2000)); // FreeRTOS delay
@@ -423,9 +430,11 @@ void parseDetection(char* detection) {
     dir_n.toCharArray(direction, MAX_DIRECTION_LENGTH);
     
     Detection newDetection(class_name, confidence,timestamp, depth_mm, x, y, z, horizontal_angle, direction);
-    xSemaphoreTake(bufferMutex, portMAX_DELAY);
+    if (!debugMode){
+      printDetection(newDetection);
+    }
+    
     addDetectionToBuffer(newDetection);
-    xSemaphoreGive(bufferMutex);
 
 }
 
@@ -481,6 +490,13 @@ void printDetection(const Detection& d) {
 void emergencyStopISR() {
     currentState = EMERGENCY_STOP;
     Serial.println("Emergency Stop");
+    // Disconnect Motors Here
+   
+}
+
+void debugModeISR() {
+    debugMode = true;
+    Serial.println("Debug Mode On");
     // Disconnect Motors Here
    
 }
@@ -655,9 +671,21 @@ void done() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("DONE");
   Serial.println("Done");
+  vTaskSuspend( readDetTaskHandle );
+  vTaskSuspend( processDetTaskHandle );
+  vTaskSuspend( SensorBoxTaskHandle );
+  if (debugMode){
+    vTaskSuspend( debugTaskHandle );
+  }
   vTaskDelay(10000 / portTICK_PERIOD_MS);
   currentState =  WAIT_FOR_START;
   Follow_Line_Counter = 0;
+  vTaskResume( readDetTaskHandle );
+  vTaskResume( processDetTaskHandle );
+  vTaskResume( SensorBoxTaskHandle );
+  if (debugMode){
+    vTaskResume( debugTaskHandle );
+  }
 
 }
 
