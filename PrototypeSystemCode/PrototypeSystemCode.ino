@@ -8,6 +8,27 @@
 
 
 /**
+ IMPORTANT NOTICE! 
+ Seriously read this. If you don't read and follow this step your code will not compile.
+ If you ask me about it and I find you did not read this I will laugh at you.
+
+ For this code to run you need to go to FreeRTOSConfig.h in the FreeRTOS directory in your
+ Arduino Libraries Directory, normally located in the Documents folder of Windows Machines,
+ and add this line to the #define INCLUDE Statements:
+
+#define INCLUDE_eTaskGetState               	1
+ I usually put it under the group beneath this comment:
+Set the following definitions to 1 to include the API function, or zero
+to exclude the API function.
+
+Now your code will compile. Good Job.
+
+--Jordan
+
+**/
+
+
+/**
  Note to everyone, this is the syntax for creating tasks
 
  BaseType_t xTaskCreate(TaskFunction_t pvTaskCode,
