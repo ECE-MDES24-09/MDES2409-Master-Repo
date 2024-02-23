@@ -50,7 +50,7 @@ struct Detection {
 
 
 
-const int BUFFER_SIZE = 15; // Size of the buffer to store detections
+const int BUFFER_SIZE = 10; // Size of the buffer to store detections
 
 // Function declarations - Detection Buffer
 void addDetectionToBuffer(const Detection& detection); // Adds a detection to the buffer

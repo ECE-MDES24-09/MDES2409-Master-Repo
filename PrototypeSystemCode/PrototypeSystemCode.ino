@@ -8,22 +8,24 @@
 
 
 /**
- IMPORTANT NOTICE! 
+ IMPORTANT NOTICE! (Yes, this is actually important)
  Seriously read this. If you don't read and follow this step your code will not compile.
  If you ask me about it and I find you did not read this I will laugh at you.
 
  For this code to run you need to go to FreeRTOSConfig.h in the FreeRTOS directory in your
  Arduino Libraries Directory, normally located in the Documents folder of Windows Machines,
- and add this line to the #define INCLUDE Statements:
+ Documents/Arduino/libraries/FreeRTOS/FreeRTOSConfig.h and add this line to the 
+ #define INCLUDE Statements:
 
-#define INCLUDE_eTaskGetState               	1
+ #define INCLUDE_eTaskGetState               	1
+
  I usually put it under the group beneath this comment:
-Set the following definitions to 1 to include the API function, or zero
-to exclude the API function.
+ Set the following definitions to 1 to include the API function, or zero
+ to exclude the API function.
 
-Now your code will compile. Good Job.
+ Now your code will compile. Good Job.
 
---Jordan
+ --Jordan
 
 **/
 
@@ -50,7 +52,7 @@ enum RobotState {
   GET_SMALL_BOXES,
   DEPOSIT_BIG_BOXES,
   DEPOSIT_SMALL_BOXES,
-  FOLLOW_LINE, // Needs Counter
+  FOLLOW_LINE, // Has Counter
   GO_TO_RED_ZONE,
   GO_TO_BLUE_ZONE,
   GO_TO_GREEN_ZONE,
@@ -69,10 +71,10 @@ int Follow_Line_Counter = 0;
 
 
 // Obj Detection Variables
-
-#define BUFFER_SIZE 512 // Maximum size of String that can be passed from Jetson
+// Buffer size definitions - because apparently, memory allocation is still a thing.
+#define BUFFER_SIZE 512 // Maximum size of String that can be passed from Jetson. About the size of an ancient Scroll.
 #define MAX_CLASSNAME_LENGTH 15 // Maximum size of the class name char array
-#define MAX_DIRECTION_LENGTH 6 // Maximum size of the direction char array
+#define MAX_DIRECTION_LENGTH 6 // Maximum size of the direction char array. Left or Right, not much philosophy here
 
 char dataBuffer[BUFFER_SIZE];
 unsigned long previousMillis = 0;  // Stores the last time a request was made
@@ -83,28 +85,31 @@ Dictionary &dir_names_dict = *(new Dictionary(2));
 Dictionary &class_names_rev = *(new Dictionary(11));
 
 
-// Debug Mode Setup
-const int debugPin = 10; // Debug mode toggle pin
-bool debugMode = false; // Global flag for debug mode
+// Debug mode - because apparently we love living on the edge
+const int debugPin = 10; // The "Oh no, what did I break now?" pin
+bool debugMode = false; // Schrödinger's debug mode
 volatile bool printDebugFlag = false;
 
 
 // RTOS Vals
 // Emergency Stop Pin
+// Emergency Stop Pin - The "Oh no, everything's on fire" button
 const int emergencyStopPin  = 2; // Example pin
 
 
-// Task Handlers
+// Task Handlers - Like employees, but they never ask for a raise
 TaskHandle_t readDetTaskHandle;
 TaskHandle_t processDetTaskHandle;
 TaskHandle_t MotorBoxTaskHandle;
 TaskHandle_t SensorBoxTaskHandle;
-TaskHandle_t printTaskHandle;
 TaskHandle_t debugTaskHandle;
+
 // Mutex for RobotState
 SemaphoreHandle_t stateMutex;
-// Serial Mutex
+// Buffer Mutex
 SemaphoreHandle_t bufferMutex;
+// Serial Mutex
+SemaphoreHandle_t serialMutex;
 
 // Event Group for Detections
 #define BIT_NEW_DATA_AVAILABLE (1 << 0)
@@ -120,7 +125,7 @@ void DebugBox(void *pvParameters);
 
 
 void setup() {
-  // put your setup code here, to run once:
+  // Let's set up our circus of tasks and hope they play nice together
   Serial.begin(9600);
   Serial2.begin(9600);
   clearBuffer();
@@ -139,12 +144,17 @@ void setup() {
   pinMode(debugPin, INPUT_PULLUP); // Set debug pin as input with pull-up
   debugMode = (digitalRead(debugPin) == LOW); // Check if the pin is LOW (switch closed)
   // Serial.println(debugMode);
-
+  
+  // Attach interrupts because we're fancy like that
   attachInterrupt(digitalPinToInterrupt(emergencyStopPin), emergencyStopISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(debugPin), emergencyStopISR, FALLING);
+  // When in doubt, just stop everything. It's the grown-up version of closing your eyes.
+
 
   xDetectionsEventGroup = xEventGroupCreate();
 
+
+  // Creating our cast of tasks - it's like a talent show, but with more crashing
   xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
   xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
   xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
@@ -153,7 +163,10 @@ void setup() {
   if (debugMode) {
     xTaskCreate(DebugBox, "DebugBox", 200, NULL, 5, &debugTaskHandle);
    }
-  
+  // For those who like to live dangerously: Uncomment these lines at your own risk.
+  // I mean, what could possibly go wrong?
+  // If you choose this ill-advised path comment out the other set of tasks.
+  // Don't create both. you will break things.
   // if (debugMode) {
   //   xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 5, &SensorBoxTaskHandle);
   //   xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 4, &readDetTaskHandle);
@@ -176,13 +189,14 @@ void setup() {
 
 // LEAVE THIS EMPTY. NO TOUCHING. AT ALL. UNDER ANY CIRCUMSTANCES. JUST DON'T DO IT.
 // WITH THE WAY THIS CODE IS SET UP WE WILL NEVER REACH THIS SECTION OF THE CODE.
+// -- Jordan
 void loop() {
-  // put your main code here, to run repeatedly:
+  // LEAVE THIS EMPTY. This is sacred ground. Trespassers will be turned into pseudo code.
 
 }
 
 
-
+// MotorBoxStateManagement - Because who needs a driver when you have a function?
 void MotorBoxStateManagement(void *pvParameters) {
   for (;;) {
     if (currentState != prevState) {
@@ -260,10 +274,10 @@ void MotorBoxStateManagement(void *pvParameters) {
         break;
     }
     prevState = currentState;
-    vTaskDelay(50 / portTICK_PERIOD_MS); // Adjust delay as needed
   }
 }
 
+// SensorBox - because we're sensing more than just disappointment
 void SensorBox(void *pvParameters){
   for (;;) {
     if (currentState != DONE || currentState != EMERGENCY_STOP) {
@@ -276,7 +290,7 @@ void SensorBox(void *pvParameters){
 
   
 
-
+// readDetTask: Reading is fundamental, even for robots. Especially when it involves detecting stuff.
 void readDetTask(void *pvParameters) {
     for (;;) { // Infinite loop for the task
       EventBits_t uxBits = xEventGroupWaitBits(
@@ -312,6 +326,7 @@ void readDetTask(void *pvParameters) {
 }
 
 
+// processDetTask - processing... still processing... maybe get a coffee? Or even better, get me one.
 void processDetTask(void *pvParameters) {
     for (;;) {
       EventBits_t uxBits = xEventGroupWaitBits(
@@ -339,7 +354,7 @@ void processDetTask(void *pvParameters) {
     }
 }
 
-
+// DebugBox - A.K.A. the 'what the heck is going on' box
 void DebugBox(void *pvParameters) {
     for (;;) {
         // if (printDebugFlag) {
@@ -523,7 +538,9 @@ void debugModeISR() {
 }
 
 
-
+// wait_for_start - because patience is a virtue, or so I'm told
+// State Number 0
+// Current Max Time ) seconds (Doesn't have time limit)
 void wait_for_start() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
@@ -535,6 +552,9 @@ void wait_for_start() {
   
 }
 
+// get_big_boxes - It's like shopping, but for robots
+// State Number 1
+// Current Max Time 10 seconds
 void get_big_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
@@ -547,6 +567,10 @@ void get_big_boxes() {
 
 }
 
+
+// get_small_boxes - Because size isn't everything
+// State Number 2
+// Current Max Time 10 seconds
 void get_small_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
@@ -557,6 +581,11 @@ void get_small_boxes() {
   currentState = FOLLOW_LINE;
 }
 
+
+// follow_line - Staying inside the lines in sometimes necessary. 
+// Don't tell my kindergarten teacher I said that.
+// State Numbers 3, 8, 11, 13
+// Current Max Times 7, 5, 5, and 5 seconds respectively
 void follow_line() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
@@ -569,26 +598,26 @@ void follow_line() {
   switch (Follow_Line_Counter) {
     case 0:
       currentState = GO_TO_RED_ZONE;
-      Follow_Line_Counter++;
       break;
     case 1:
       currentState = GO_TO_GREEN_ZONE;
-      Follow_Line_Counter++;
       break;
     case 2:
       currentState = CROSS_GAP;
-      Follow_Line_Counter++;
       break;
     case 3:
       currentState = DEPOSIT_ROCKETS;
-      Follow_Line_Counter++;
       break;
     default:
         break;
   }
+  Follow_Line_Counter++;
 }
 
 
+// deposit_big_boxes - Making deposits, but sadly not in your bank account
+// State Number 7
+// Current Max Time 3 seconds
 void deposit_big_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
@@ -599,6 +628,10 @@ void deposit_big_boxes() {
   currentState = FOLLOW_LINE;
 }
 
+
+// deposit_small_boxes - Because every box deserves a home
+// State Number 5
+// Current Max Time 3 seconds
 void deposit_small_boxes() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
@@ -609,7 +642,9 @@ void deposit_small_boxes() {
   currentState = GO_TO_BLUE_ZONE;
 }
 
-
+// go_to_red_zone - Red: The color of urgency (or tomatoes)
+// State Number 4
+// Current Max Time 4 seconds
 void go_to_red_zone() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
@@ -621,17 +656,25 @@ void go_to_red_zone() {
   currentState = DEPOSIT_SMALL_BOXES;
 }
 
+
+// go_to_blue_zone - Feeling blue? Head here
+// State Number 6
+// Current Max Time 2 seconds
 void go_to_blue_zone() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
   vTaskResume( processDetTaskHandle );
   Serial2.println("GO_TO_BLUE_ZONE");
   Serial.println("Going to Blue Zone");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  vTaskDelay(5000 / portTI
+  CK_PERIOD_MS);
   currentState = DEPOSIT_BIG_BOXES;
 }
 
 
+// go_to_green_zone - The eco-friendly zone
+// State Number 9
+// Current Max Time 3 seconds
 void go_to_green_zone() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
@@ -643,6 +686,10 @@ void go_to_green_zone() {
   currentState = GET_ROCKETS;
 }
 
+// get_rockets - It's not rocket science. Oh wait, yes it is!
+// Credit for this one goes to one of my T-shirts.
+// State Number 10
+// Current Max Time 10 seconds
 void get_rockets() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("GET_ROCKETS");
@@ -651,6 +698,9 @@ void get_rockets() {
   currentState = FOLLOW_LINE;
 }
 
+// deposit_rockets - One small step for gravity. One big leap for out robot.
+// State Number 14
+// Current Max Time 16 seconds
 void deposit_rockets() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
@@ -660,7 +710,9 @@ void deposit_rockets() {
   currentState =  DISPLAY_LOGO;
 }
 
-
+// cross_gap - Mind the gap!
+// State Number 12
+// Current Max Time 16 seconds
 void cross_gap() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("CROSS_GAP");
@@ -669,7 +721,9 @@ void cross_gap() {
   currentState = FOLLOW_LINE;
 }
 
-
+// display_logo - Time for a commercial break
+// State Number 5
+// Current Max Time 2 seconds
 void display_logo() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("DISPLAY_LOGO");
@@ -678,7 +732,10 @@ void display_logo() {
   currentState =  PUSH_BUTTON;
 }
 
-
+// push_button - The big red button moment we've all been waiting for. 
+//No, it won't launch missiles... I think.
+// State Number 16
+// Current Max Time 3 seconds
 void push_button() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("PUSH_BUTTON");
@@ -687,7 +744,9 @@ void push_button() {
   currentState =  DONE;
 }
 
-
+// done - Congratulations, you've made it to the end!
+// State Number 17
+// Current Max Time ) seconds (Doesn't have time limit)
 void done() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("DONE");
@@ -710,7 +769,9 @@ void done() {
 
 }
 
-
+// emergency_stop - In case of fire, break glass. Or just call this.
+// State Number 18
+// Current Max Time ) seconds (Doesn't have time limit)
 void emergency_stop() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("EMERGENCY_STOP");
