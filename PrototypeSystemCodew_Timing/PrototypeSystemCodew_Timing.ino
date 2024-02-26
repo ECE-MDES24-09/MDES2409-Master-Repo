@@ -5,7 +5,7 @@
 #include <DetectionsBuffer.h>
 #include <Dictionary.h>
 #include <SoftwareSerial.h>
-
+#include "TimeManagement.h"
 
 /**
  IMPORTANT NOTICE! (Yes, this is actually important)
@@ -42,7 +42,9 @@
 
 **/
 
-
+// Set up TimeManager. This robot is better at time management than me.
+// And I built its time management system. Sigh.
+TimeManagement timeManager;
 
 
 // Enum for different robot states
@@ -64,6 +66,8 @@ enum RobotState {
   DONE,
   EMERGENCY_STOP
 };
+
+// RobotState Vals
 RobotState prevState = WAIT_FOR_START;
 RobotState currentState = WAIT_FOR_START;
 int Follow_Line_Counter = 0;
@@ -71,7 +75,7 @@ int Follow_Line_Counter = 0;
 
 
 // Obj Detection Variables
-// Buffer size definitions - because apparently, memory allocation is still a thing.
+// Buffer size definitions - because apparently, memory allocation is still a thing. I miss Python.
 #define BUFFER_SIZE 512 // Maximum size of String that can be passed from Jetson. About the size of an ancient Scroll.
 #define MAX_CLASSNAME_LENGTH 15 // Maximum size of the class name char array
 #define MAX_DIRECTION_LENGTH 6 // Maximum size of the direction char array. Left or Right, not much philosophy here
@@ -155,10 +159,10 @@ void setup() {
 
 
   // Creating our cast of tasks - it's like a talent show, but with more crashing
-  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 128, NULL, 1, &MotorBoxTaskHandle);
-  xTaskCreate(SensorBox, "SensorBox", 1000, NULL, 4, &SensorBoxTaskHandle);
-  xTaskCreate(readDetTask, "readDetTask", 1000, NULL, 3, &readDetTaskHandle);
-  xTaskCreate(processDetTask, "processDetTask", 1000, NULL, 2, &processDetTaskHandle);
+  xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 1000, NULL, 3, &MotorBoxTaskHandle);
+  xTaskCreate(SensorBox, "SensorBox", 128, NULL, 4, &SensorBoxTaskHandle);
+  xTaskCreate(readDetTask, "readDetTask", 500, NULL, 2, &readDetTaskHandle);
+  xTaskCreate(processDetTask, "processDetTask", 500, NULL, 1, &processDetTaskHandle);
 
   if (debugMode) {
     xTaskCreate(DebugBox, "DebugBox", 200, NULL, 5, &debugTaskHandle);
@@ -208,66 +212,100 @@ void MotorBoxStateManagement(void *pvParameters) {
       case WAIT_FOR_START:
         // Code to handle waiting for start
         // Green Light stuff, yada yada
+        timeManager.startState(0); 
         wait_for_start();
         break;
       case GET_BIG_BOXES:
         // Code for getting big blocks
+        timeManager.startState(1);  
         get_big_boxes();
         break;
       case GET_SMALL_BOXES:
         // Code for getting small blocks
+        timeManager.startState(2);
         get_small_boxes();
         break;
       case DEPOSIT_BIG_BOXES:
         // Code for depositing big blocks
+        timeManager.startState(7);  
         deposit_big_boxes();
         break;
       case DEPOSIT_SMALL_BOXES:
         // Code for depositing small blocks
+        timeManager.startState(5);  
         deposit_small_boxes();
         break;
-      case FOLLOW_LINE:
+case FOLLOW_LINE:
         // Code to follow the yellow line
+        switch (Follow_Line_Counter) {
+          case 0:
+            timeManager.startState(3); 
+            break;
+          case 1:
+            timeManager.startState(8); 
+            break;
+          case 2:
+            timeManager.startState(11); 
+            break;
+          case 3:
+            timeManager.startState(13); 
+            break;
+          default:
+              break;
+        }
+
         follow_line();
         break;
+
       case GO_TO_RED_ZONE:
         // Code to go to the red zone
+        // No touchdowns tho - Sorry.
+        timeManager.startState(4); 
         go_to_red_zone();
         break;
       case GO_TO_BLUE_ZONE:
         // Code to go to the blue zone
+        timeManager.startState(6); 
         go_to_blue_zone();
         break;
       case GO_TO_GREEN_ZONE:
         // Code to go to the green zone
+        timeManager.startState(9); 
         go_to_green_zone();
         break;
       case GET_ROCKETS:
         // Code for getting rockets
+        timeManager.startState(10); 
         get_rockets();
         break;
       case DEPOSIT_ROCKETS:
         // Code for depositing rockets
+        timeManager.startState(14); 
         deposit_rockets();
         break;
       case CROSS_GAP:
         // Code to cross the gap
+        timeManager.startState(12); 
         cross_gap();
         break;
       case PUSH_BUTTON:
         // Code to push stop timer button
+        timeManager.startState(16); 
         push_button();
         break;
       case DISPLAY_LOGO:
         // Code to display the logo
+        timeManager.startState(15); 
         display_logo();
         break;
       case DONE:
         // Code for stopping when all tasks completed
+        timeManager.startState(17); 
         done();
         break;
       case EMERGENCY_STOP:
         // Code for emergency stop
+        timeManager.startState(18); 
         emergency_stop();
         break;
       default:
@@ -282,7 +320,7 @@ void SensorBox(void *pvParameters){
   for (;;) {
     if (currentState != DONE || currentState != EMERGENCY_STOP) {
       Serial.println("Sensor Task");
-      vTaskDelay(3000 / portTICK_PERIOD_MS); // On for 3 seconds
+      vTaskDelay(300 / portTICK_PERIOD_MS); // On for 3 seconds
 
     }
   }
@@ -540,7 +578,7 @@ void debugModeISR() {
 
 // wait_for_start - because patience is a virtue, or so I'm told
 // State Number 0
-// Current Max Time ) seconds (Doesn't have time limit)
+// Current Max Time 0 seconds (Doesn't have time limit)
 void wait_for_start() {
   vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
@@ -556,14 +594,28 @@ void wait_for_start() {
 // State Number 1
 // Current Max Time 10 seconds
 void get_big_boxes() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
   vTaskResume( readDetTaskHandle );
   vTaskResume( processDetTaskHandle );
+  Serial.println(stateComplete);
   Serial2.println("GET_BIG_BOXES");
-  Serial.println("Getting Big Boxes");
+  while ((timeManager.getRemainingTimeForState(1) > 0) && !stateComplete ){
+    // vTaskDelay(100 / portTICK_PERIOD_MS);
+    Serial.println(timeManager.getRemainingTimeForState(1));
+    
+    // xSemaphoreTake(serialMutex, portMAX_DELAY);
+    Serial.println("Getting Big Boxes");
+    // xSemaphoreGive(serialMutex);
+    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+    }
+  } 
+  timeManager.endState(1, stateComplete);
   currentState = GET_SMALL_BOXES;
-  xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
 
 }
 
@@ -572,41 +624,105 @@ void get_big_boxes() {
 // State Number 2
 // Current Max Time 10 seconds
 void get_small_boxes() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
-  vTaskResume( readDetTaskHandle );
-  vTaskResume( processDetTaskHandle );
+  bool stateComplete = false;
   Serial2.println("GET_SMALL_BOXES");
-  Serial.println("Getting Small Boxes");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(2) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(2));
+    Serial.println("Getting Small Boxes");
+    // timeManager.endState(2);
+    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+    }
+  } 
   currentState = FOLLOW_LINE;
+  timeManager.endState(2, stateComplete);
 }
-
 
 // follow_line - Staying inside the lines in sometimes necessary. 
 // Don't tell my kindergarten teacher I said that.
 // State Numbers 3, 8, 11, 13
 // Current Max Times 7, 5, 5, and 5 seconds respectively
 void follow_line() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
   vTaskSuspend( processDetTaskHandle );
   Serial2.print("FOLLOW_LINE.");
   Serial2.println(Follow_Line_Counter);
-  Serial.print("Following Line.");
-  Serial.println(Follow_Line_Counter);
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+  
   switch (Follow_Line_Counter) {
     case 0:
+      while ((timeManager.getRemainingTimeForState(3) > 0) && !stateComplete ){
+        Serial.println(timeManager.getRemainingTimeForState(3));
+        Serial.print("Following Line.");
+        Serial.println(Follow_Line_Counter);
+        vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // FreeRTOS delay
+        long rand = random(100);
+        Serial.println(rand);
+        if (rand >= 75) {
+          stateComplete = true;
+          Serial.println(stateComplete);
+          }
+      }
       currentState = GO_TO_RED_ZONE;
+      timeManager.endState(3, stateComplete);
+      
       break;
     case 1:
+      while ((timeManager.getRemainingTimeForState(8) > 0) && !stateComplete ){
+        Serial.println(timeManager.getRemainingTimeForState(8));
+        Serial.print("Following Line.");
+        Serial.println(Follow_Line_Counter);
+        vTaskDelay(pdMS_TO_TICKS(250 + random(1500)));  // FreeRTOS delay
+        long rand = random(100);
+        Serial.println(rand);
+        if (rand >= 75) {
+          stateComplete = true;
+          Serial.println(stateComplete);
+          }
+      }
       currentState = GO_TO_GREEN_ZONE;
+      timeManager.endState(8, stateComplete);
+      
       break;
     case 2:
+      while ((timeManager.getRemainingTimeForState(11) > 0) && !stateComplete ){
+        Serial.println(timeManager.getRemainingTimeForState(11));
+        Serial.print("Following Line.");
+        Serial.println(Follow_Line_Counter);
+        vTaskDelay(pdMS_TO_TICKS(250 + random(1500)));  // FreeRTOS delay
+        long rand = random(100);
+        Serial.println(rand);
+        if (rand >= 75) {
+          stateComplete = true;
+          Serial.println(stateComplete);
+          }
+      }
       currentState = CROSS_GAP;
+      timeManager.endState(11, stateComplete);
+      
       break;
     case 3:
+      while ((timeManager.getRemainingTimeForState(13) > 0) && !stateComplete ){
+        Serial.println(timeManager.getRemainingTimeForState(13));
+        Serial.print("Following Line.");
+        Serial.println(Follow_Line_Counter);
+        vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // FreeRTOS delay
+        long rand = random(100);
+        Serial.println(rand);
+        if (rand >= 75) {
+          stateComplete = true;
+          Serial.println(stateComplete);
+          }
+      }
       currentState = DEPOSIT_ROCKETS;
+      timeManager.endState(13, stateComplete);
       break;
     default:
         break;
@@ -615,17 +731,29 @@ void follow_line() {
 }
 
 
-// deposit_big_boxes - Making deposits, but sadly not in your bank account
+
+// deposit_big_boxes - Making deposits, but sadly not in your bank account. Or mine.
 // State Number 7
 // Current Max Time 3 seconds
 void deposit_big_boxes() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
   vTaskSuspend( processDetTaskHandle );
   Serial2.println("DEPOSIT_BIG_BOXES");
-  Serial.println("Depositing Big Boxes");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(7) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(7));
+    Serial.println("Depositing Big Boxes");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(500)));   // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState = FOLLOW_LINE;
+  timeManager.endState(7, stateComplete);
 }
 
 
@@ -633,42 +761,73 @@ void deposit_big_boxes() {
 // State Number 5
 // Current Max Time 3 seconds
 void deposit_small_boxes() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskSuspend( readDetTaskHandle );
   vTaskSuspend( processDetTaskHandle );
   Serial2.println("DEPOSIT_SMALL_BOXES");
-  Serial.println("Depositing Small Boxes");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(5) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(5));
+    Serial.println("Depositing Small Boxes");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(500)));   // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState = GO_TO_BLUE_ZONE;
+  timeManager.endState(5, stateComplete);
 }
 
 // go_to_red_zone - Red: The color of urgency (or tomatoes)
 // State Number 4
 // Current Max Time 4 seconds
 void go_to_red_zone() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
   vTaskResume( processDetTaskHandle );
   xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
   Serial2.println("GO_TO_RED_ZONE");
-  Serial.println("Going to Red Zone");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(4) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(4));
+    Serial.println("Going to Red Zone");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState = DEPOSIT_SMALL_BOXES;
+  timeManager.endState(4, stateComplete);
 }
-
 
 // go_to_blue_zone - Feeling blue? Head here
 // State Number 6
 // Current Max Time 2 seconds
 void go_to_blue_zone() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
   vTaskResume( processDetTaskHandle );
   Serial2.println("GO_TO_BLUE_ZONE");
-  Serial.println("Going to Blue Zone");
-  vTaskDelay(5000 / portTI
-  CK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(6) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(6));
+    Serial.println("Going to Blue Zone");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState = DEPOSIT_BIG_BOXES;
+  timeManager.endState(6, stateComplete);
 }
 
 
@@ -676,14 +835,25 @@ void go_to_blue_zone() {
 // State Number 9
 // Current Max Time 3 seconds
 void go_to_green_zone() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   vTaskResume( readDetTaskHandle );
   vTaskResume( processDetTaskHandle );
   xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
   Serial2.println("GO_TO_GREEN_ZONE");
-  Serial.println("Going to Green Zone");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(9) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(9));
+    Serial.println("Going to Green Zone");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState = GET_ROCKETS;
+  timeManager.endState(9, stateComplete);
 }
 
 // get_rockets - It's not rocket science. Oh wait, yes it is!
@@ -691,64 +861,122 @@ void go_to_green_zone() {
 // State Number 10
 // Current Max Time 10 seconds
 void get_rockets() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("GET_ROCKETS");
-  Serial.println("Getting Rockets");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(10) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(10));
+    Serial.println("Getting Rockets");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState = FOLLOW_LINE;
+  timeManager.endState(10, stateComplete);
 }
 
 // deposit_rockets - One small step for gravity. One big leap for out robot.
 // State Number 14
 // Current Max Time 16 seconds
 void deposit_rockets() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
-  xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
+  vTaskResume( readDetTaskHandle );
+  vTaskResume( processDetTaskHandle );
   Serial2.println("DEPOSIT_ROCKETS");
-  Serial.println("Depositing Rockets");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(14) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(14));
+    Serial.println("Depositing Rockets");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState =  DISPLAY_LOGO;
+  timeManager.endState(14, stateComplete);
 }
 
 // cross_gap - Mind the gap!
 // State Number 12
 // Current Max Time 16 seconds
 void cross_gap() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("CROSS_GAP");
-  Serial.println("Crossing Gap");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(12) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(12));
+    Serial.println("Crossing Gap");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState = FOLLOW_LINE;
+  timeManager.endState(12, stateComplete);
 }
 
 // display_logo - Time for a commercial break
 // State Number 5
 // Current Max Time 2 seconds
 void display_logo() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("DISPLAY_LOGO");
-  Serial.println("Displaying Logo");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(15) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(15));
+    Serial.println("Displaying Logo");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState =  PUSH_BUTTON;
+  timeManager.endState(15, stateComplete);
 }
+
 
 // push_button - The big red button moment we've all been waiting for. 
 //No, it won't launch missiles... I think.
 // State Number 16
 // Current Max Time 3 seconds
 void push_button() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("PUSH_BUTTON");
-  Serial.println("Pushing Button");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while ((timeManager.getRemainingTimeForState(16) > 0) && !stateComplete ){
+    Serial.println(timeManager.getRemainingTimeForState(16));
+    Serial.println("Pushing Button");
+    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 75) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+      }
+  }
   currentState =  DONE;
+  timeManager.endState(16, stateComplete);
 }
 
 // done - Congratulations, you've made it to the end!
 // State Number 17
-// Current Max Time ) seconds (Doesn't have time limit)
+// Current Max Time 0 seconds (Doesn't have time limit)
 void done() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("DONE");
   Serial.println("Done");
   vTaskSuspend( readDetTaskHandle );
@@ -757,7 +985,7 @@ void done() {
   if (debugMode){
     vTaskSuspend( debugTaskHandle );
   }
-  vTaskDelay(10000 / portTICK_PERIOD_MS);
+  vTaskDelay(1500 / portTICK_PERIOD_MS);
   currentState =  WAIT_FOR_START;
   Follow_Line_Counter = 0;
   vTaskResume( readDetTaskHandle );
@@ -766,16 +994,19 @@ void done() {
   if (debugMode){
     vTaskResume( debugTaskHandle );
   }
+  timeManager.endState(17, stateComplete);
 
 }
 
 // emergency_stop - In case of fire, break glass. Or just call this.
 // State Number 18
-// Current Max Time ) seconds (Doesn't have time limit)
+// Current Max Time 0 seconds (Doesn't have time limit)
 void emergency_stop() {
-  vTaskDelay(100 / portTICK_PERIOD_MS);
+  bool stateComplete = false;
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
   Serial2.println("EMERGENCY_STOP");
   Serial.println("EMERGENCY STOP");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(1500 + random(4000))); // Delay for 1 to 5 seconds
   currentState =  DONE;
+  timeManager.endState(18, stateComplete);
 }
