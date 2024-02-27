@@ -11,6 +11,7 @@ TimeManagement::TimeManagement(): _isStartStateCompleted(false) {
    _stateTimers = new TimerHandle_t[19];
    _bufferTimer = NULL;
    _timeBank = 0;
+   
 
 }
 
@@ -37,14 +38,31 @@ void TimeManagement::startTimer() {
 }
 
 void TimeManagement::startState(int stateId) {
+	if (stateId > 0 && stateId < 17) {
+		TickType_t  stateTime = pdMS_TO_TICKS(_stateTimeLimits[stateId]);
+		xTimerReset(StateTimeoutTimer, 0);
+		xTimerChangePeriod(StateTimeoutTimer, stateTime, 0);
+		xTimerStart(StateTimeoutTimer, 0);
+	}
+
 	_stateStartTime = millis();
+	Serial.print("Hi Start ");
+	Serial.println(stateId);
+	
 }
 
 
 void TimeManagement::endState(int stateId,  bool allocate) {
+	_stateEndTime = millis();
+	if (stateId > 0 && stateId < 17) {
+		xTimerStop(StateTimeoutTimer, 0);
+	
+	}
 	Serial.print("Hi End ");
 	Serial.println(stateId);
-	_stateEndTime = millis();
+	if (stateId == 0) {
+		startTimer();
+	}
 	long elapsedTime = _stateEndTime - _stateStartTime;
 	Serial.print("Elapsed Time for Task: ");
 	Serial.println(elapsedTime);
@@ -55,12 +73,52 @@ void TimeManagement::endState(int stateId,  bool allocate) {
 		_timeBank += addToBank;
 		allocateTime(stateId);
 	}
+	
+
 }
 
 
 
 void TimeManagement::allocateTime(int stateId) {
 	Serial.println("Hi Allocate");
+	
+	long rTime = getRemainingTime();
+	Serial.print("Overall Remaining Time: ");
+	Serial.print(rTime);
+	Serial.println(" ms");
+
+	if (_timeBank > 0) {
+        // Calculate the total of the max times for all subsequent states
+        unsigned long totalMaxTimeRemaining = 0;
+        for (unsigned int i = stateId + 1; i < _numStates-2; ++i) {
+            totalMaxTimeRemaining += _stateTimeLimits[i];
+        }
+
+        // Distribute the time bank to all subsequent states based on their max times
+		while (_timeBank > 500) {
+			for (int i = stateId + 1; i < _numStates-2; ++i) {
+				if (totalMaxTimeRemaining > 0) {
+					// Calculate the proportion of max time for each state relative to the total
+					float proportion = (float)_stateTimeLimits[i] / totalMaxTimeRemaining;
+
+					// Determine the amount of time to allocate to the state based on the proportion
+					long extraTime = (long)(proportion * _timeBank);
+
+					// Ensure we don't allocate more than what's available in the time bank
+					extraTime = min(extraTime, _timeBank);
+					long origlimit = _stateTimeLimits[i];
+					// Allocate the extra time to the state
+					_stateTimeLimits[i] += extraTime;
+					
+					
+					long origBank = _timeBank;
+					// Decrease the time bank by the allocated time
+					_timeBank -= extraTime;
+										
+				}
+			}
+		}
+    }
 	Serial.print("Timebank: ");
 	Serial.println(_timeBank);
 }
@@ -77,11 +135,27 @@ long TimeManagement::getRemainingTimeForState(int stateId) const {
 
 long TimeManagement::getRemainingTime() const {
 	long currentTime = millis();
-
-	return currentTime - _startTime;
+	long elTime = currentTime - _startTime;
+	return _maxTime - elTime;
 }
 
 long TimeManagement::getTimeBank() const {
 		Serial.println("Hi GetBank");
     return _timeBank;
+}
+
+long TimeManagement::getStateLimit(int stateId) const {
+		
+    return _stateTimeLimits[stateId];
+}
+
+
+void TimeManagement::StateTimeoutCallback(TimerHandle_t xTimer) {
+    TimeManagement* instance = static_cast<TimeManagement*>(pvTimerGetTimerID(xTimer));
+    if (instance != nullptr) {
+        Serial.println("Timeout");
+        bool timeOut = true; // You might need to adjust this part based on your requirements
+        uint32_t valueToSend = timeOut ? 1 : 0;
+        xTaskNotify(instance->MotorBoxTaskHandle, valueToSend, eSetValueWithOverwrite);
+    }
 }
