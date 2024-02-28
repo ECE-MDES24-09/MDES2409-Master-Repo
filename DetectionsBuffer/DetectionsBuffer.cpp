@@ -98,7 +98,15 @@ Detection getLatestDetection() {
     return latestDetection; // Return the detection with the earliest timestamp
 }
 
-// Function to clear the detection buffer
+Detection getLeftmostDetection(){
+	
+
+}
+
 void clearBuffer() {
+    // Reset each Detection in the buffer
+    for (int i = 0; i < BUFFER_SIZE; ++i) {
+        buffer[i] = Detection{}; // Assigning a default-constructed Detection
+    }
     bufferIndex = 0; // Reset the buffer index to start
 }

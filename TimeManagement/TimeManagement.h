@@ -6,6 +6,7 @@
 #include <timers.h>
 #include <semphr.h>
 #include <task.h>
+#include <DetectionsBuffer.h>
 
 class TimeManagement {
 public:
@@ -27,7 +28,7 @@ public:
   long TimeManagement::getTimeBank() const;
   long TimeManagement::getStateLimit(int stateId) const;
   static void StateTimeoutCallback(TimerHandle_t xTimer);
-
+  long TimeManagement::getRunTime() const;
 
 
 private:

@@ -73,6 +73,10 @@ void TimeManagement::endState(int stateId,  bool allocate) {
 		_timeBank += addToBank;
 		allocateTime(stateId);
 	}
+	if (stateId > 0 && stateId < 17) {
+		Serial.println("Clearing Buffer");
+		clearBuffer();	
+	}
 	
 
 }
@@ -132,6 +136,13 @@ long TimeManagement::getRemainingTimeForState(int stateId) const {
 	
 	return _stateTimeLimits[stateId] - stateElapsedTime;
 }
+
+long TimeManagement::getRunTime() const {
+	long currentTime = millis();
+	long elTime = currentTime - _startTime;
+	return elTime;
+}
+
 
 long TimeManagement::getRemainingTime() const {
 	long currentTime = millis();
