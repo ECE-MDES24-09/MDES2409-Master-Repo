@@ -929,7 +929,7 @@ void get_rockets() {
   xSemaphoreGive(bufferMutex);
 }
 
-// deposit_rockets - One small step for gravity. One big leap for out robot.
+// deposit_rockets - One small step for gravity. One big leap for our robot.
 // State Number 14
 // Current Max Time 16 seconds
 void deposit_rockets() {
@@ -1005,7 +1005,7 @@ void display_logo() {
 
 
 // push_button - The big red button moment we've all been waiting for. 
-//No, it won't launch missiles... I think.
+// No, it won't launch missiles... I think.
 // State Number 16
 // Current Max Time 3 seconds
 void push_button() {
@@ -1051,7 +1051,7 @@ void done() {
     vTaskSuspend( debugTaskHandle );
   }
   vTaskDelay(1500 / portTICK_PERIOD_MS);
-  currentState =  WAIT_FOR_START;
+  // currentState =  WAIT_FOR_START;
   // Follow_Line_Counter = 0;
   // vTaskResume( readDetTaskHandle );
   // vTaskResume( processDetTaskHandle );
