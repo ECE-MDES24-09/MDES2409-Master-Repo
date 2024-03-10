@@ -1,14 +1,14 @@
-#ifndef LineFollower_h
-#define LineFollower_h
+#ifndef RoboDriver_h
+#define RoboDriver_h
 
 #include <Arduino.h>
 #include <MotorDriver.h>
 #include <pixy_line_detection.h>
 #include <gyro.h>
 
-class LineFollower {
+class RoboDriver {
 public:
-  LineFollower();
+  RoboDriver();
   void begin();
   bool followLineUntilTurn();
   void turn(float turnAngle);

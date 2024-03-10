@@ -1,10 +1,10 @@
-#include "LineFollower.h"
+#include "RoboDriver.h"
 
-LineFollower::LineFollower() {
+RoboDriver::RoboDriver() {
   // Constructor
 }
 
-void LineFollower::begin() {
+void RoboDriver::begin() {
   // Initialize GPIO pins, sensors, and modules
   // Initialize GPIO pins
   pinMode(5, OUTPUT);
@@ -16,7 +16,7 @@ void LineFollower::begin() {
   lineDetect.init();  
 }
 
-bool LineFollower::followLineUntilTurn() {
+bool RoboDriver::followLineUntilTurn() {
   // Follow line until a 90-degree turn is detected
   while (true) {
     lineDetect.refresh();
@@ -41,7 +41,7 @@ bool LineFollower::followLineUntilTurn() {
   return true;
 }
 
-void LineFollower::turn(float turnAngle) {
+void RoboDriver::turn(float turnAngle) {
   // Function to execute a turn
   float currentAngle = 0;
   float targetAngle = turnAngle + getGyroAng();
@@ -64,7 +64,7 @@ void LineFollower::turn(float turnAngle) {
   }
 }
 
-void LineFollower::stopMotors() {
+void RoboDriver::stopMotors() {
   // Function to stop the motors
   motorDriver.setSpeed(0, 0);
   for (int i = 0; i < MotorRunDuration; i++) {
@@ -73,7 +73,7 @@ void LineFollower::stopMotors() {
 }
 
 
-void LineFollower::constrainTurnSpeed(float &speed) {
+void RoboDriver::constrainTurnSpeed(float &speed) {
   // Constrain the turn speed to a maximum value
   const float MaxTurnSpeed = 200;
   if (speed > MaxTurnSpeed) speed = MaxTurnSpeed;
