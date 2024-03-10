@@ -6,6 +6,7 @@
 #include <Dictionary.h>
 #include <SoftwareSerial.h>
 #include "TimeManagement.h"
+#include <LineFollower.h>
 
 /**
  IMPORTANT NOTICE! (Yes, this is actually important)
@@ -45,7 +46,7 @@
 // Set up TimeManager. This robot is better at time management than me.
 // And I built its time management system. Sigh.
 TimeManagement timeManager;
-
+LineFollower lineFollower(200, 90);
 
 // Enum for different robot states
 enum RobotState {
@@ -152,10 +153,9 @@ void setup() {
   
   // Attach interrupts because we're fancy like that
   attachInterrupt(digitalPinToInterrupt(emergencyStopPin), emergencyStopISR, FALLING);
-  attachInterrupt(digitalPinToInterrupt(debugPin), emergencyStopISR, FALLING);
+  attachInterrupt(digitalPinToInterrupt(debugPin), debugModeISR, FALLING);
   // When in doubt, just stop everything. It's the grown-up version of closing your eyes.
 
-  timeManager.StateTimeoutTimer = xTimerCreate("StateTimeout", pdMS_TO_TICKS(0), pdFALSE, (void *) 0, timeManager.StateTimeoutCallback);
 
   xDetectionsEventGroup = xEventGroupCreate();
 
@@ -632,10 +632,10 @@ void get_big_boxes() {
     most_recent = getLatestDetection();
     Serial.println("Most Recent Detection:");
     printDetection(most_recent);
-    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
     }
@@ -659,10 +659,10 @@ void get_small_boxes() {
     Serial.println(timeManager.getRemainingTimeForState(2));
     Serial.println("Getting Small Boxes");
     // timeManager.endState(2);
-    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
     }
@@ -688,79 +688,16 @@ void follow_line() {
   
   switch (Follow_Line_Counter) {
     case 0:
-      while ((timeManager.getRemainingTimeForState(3) > 0) && !stateComplete && !timeManager.timeOut ){
-        Serial.println(timeManager.getRemainingTimeForState(3));
-        Serial.print("Following Line.");
-        Serial.println(Follow_Line_Counter);
-        vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // FreeRTOS delay
-        long rand = random(100);
-        Serial.println(rand);
-        if (rand >= 75) {
-          stateComplete = true;
-          Serial.println(stateComplete);
-          }
-      }
-      currentState = GO_TO_RED_ZONE;
-      xSemaphoreTake(bufferMutex, portMAX_DELAY);
-      timeManager.endState(3, stateComplete);
-      xSemaphoreGive(bufferMutex);
-      
+      line_follow(3, DEPOSIT_ROCKETS, GO_TO_RED_ZONE, stateComplete);      
       break;
     case 1:
-      while ((timeManager.getRemainingTimeForState(8) > 0) && !stateComplete && !timeManager.timeOut ){
-        Serial.println(timeManager.getRemainingTimeForState(8));
-        Serial.print("Following Line.");
-        Serial.println(Follow_Line_Counter);
-        vTaskDelay(pdMS_TO_TICKS(250 + random(1500)));  // FreeRTOS delay
-        long rand = random(100);
-        Serial.println(rand);
-        if (rand >= 75) {
-          stateComplete = true;
-          Serial.println(stateComplete);
-          }
-      }
-      currentState = GO_TO_GREEN_ZONE;
-      xSemaphoreTake(bufferMutex, portMAX_DELAY);
-      timeManager.endState(8, stateComplete);
-      xSemaphoreGive(bufferMutex);
-      
+      line_follow(8, GO_TO_GREEN_ZONE, Follow_Line_Counter, stateComplete);      
       break;
     case 2:
-      while ((timeManager.getRemainingTimeForState(11) > 0) && !stateComplete && !timeManager.timeOut ){
-        Serial.println(timeManager.getRemainingTimeForState(11));
-        Serial.print("Following Line.");
-        Serial.println(Follow_Line_Counter);
-        vTaskDelay(pdMS_TO_TICKS(250 + random(1500)));  // FreeRTOS delay
-        long rand = random(100);
-        Serial.println(rand);
-        if (rand >= 75) {
-          stateComplete = true;
-          Serial.println(stateComplete);
-          }
-      }
-      currentState = CROSS_GAP;
-      xSemaphoreTake(bufferMutex, portMAX_DELAY);
-      timeManager.endState(11, stateComplete);
-      xSemaphoreGive(bufferMutex);
-      
+      line_follow(11, CROSS_GAP, Follow_Line_Counter, stateComplete);
       break;
     case 3:
-      while ((timeManager.getRemainingTimeForState(13) > 0) && !stateComplete && !timeManager.timeOut ){
-        Serial.println(timeManager.getRemainingTimeForState(13));
-        Serial.print("Following Line.");
-        Serial.println(Follow_Line_Counter);
-        vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // FreeRTOS delay
-        long rand = random(100);
-        Serial.println(rand);
-        if (rand >= 75) {
-          stateComplete = true;
-          Serial.println(stateComplete);
-          }
-      }
-      currentState = DEPOSIT_ROCKETS;
-      xSemaphoreTake(bufferMutex, portMAX_DELAY);
-      timeManager.endState(13, stateComplete);
-      xSemaphoreGive(bufferMutex);
+      line_follow(13, DEPOSIT_ROCKETS, Follow_Line_Counter, stateComplete);
       break;
     default:
         break;
@@ -782,10 +719,10 @@ void deposit_big_boxes() {
   while ((timeManager.getRemainingTimeForState(7) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(7));
     Serial.println("Depositing Big Boxes");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(500)));   // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));   // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -809,10 +746,10 @@ void deposit_small_boxes() {
   while ((timeManager.getRemainingTimeForState(5) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(5));
     Serial.println("Depositing Small Boxes");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(500)));   // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));   // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -836,10 +773,10 @@ void go_to_red_zone() {
   while ((timeManager.getRemainingTimeForState(4) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(4));
     Serial.println("Going to Red Zone");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -862,10 +799,10 @@ void go_to_blue_zone() {
   while ((timeManager.getRemainingTimeForState(6) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(6));
     Serial.println("Going to Blue Zone");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -890,10 +827,10 @@ void go_to_green_zone() {
   while ((timeManager.getRemainingTimeForState(9) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(9));
     Serial.println("Going to Green Zone");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -915,10 +852,10 @@ void get_rockets() {
   while ((timeManager.getRemainingTimeForState(10) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(10));
     Serial.println("Getting Rockets");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -941,10 +878,10 @@ void deposit_rockets() {
   while ((timeManager.getRemainingTimeForState(14) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(14));
     Serial.println("Depositing Rockets");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -965,10 +902,10 @@ void cross_gap() {
   while ((timeManager.getRemainingTimeForState(12) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(12));
     Serial.println("Crossing Gap");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(1500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -989,10 +926,10 @@ void display_logo() {
   while ((timeManager.getRemainingTimeForState(15) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(15));
     Serial.println("Displaying Logo");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -1015,10 +952,10 @@ void push_button() {
   while ((timeManager.getRemainingTimeForState(16) > 0) && !stateComplete && !timeManager.timeOut ){
     Serial.println(timeManager.getRemainingTimeForState(16));
     Serial.println("Pushing Button");
-    vTaskDelay(pdMS_TO_TICKS(250 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
+    vTaskDelay(pdMS_TO_TICKS(150 + random(500))); // Delay for 1 to 5 seconds  // FreeRTOS delay
     long rand = random(100);
     Serial.println(rand);
-    if (rand >= 75) {
+    if (rand >= 65) {
       stateComplete = true;
       Serial.println(stateComplete);
       }
@@ -1074,4 +1011,28 @@ void emergency_stop() {
   vTaskDelay(pdMS_TO_TICKS(1500 + random(4000))); // Delay for 1 to 5 seconds
   currentState =  DONE;
   timeManager.endState(18, stateComplete);
+}
+
+
+void line_follow(int stateId, RobotState nextState, int Follow_Line_Counter, bool stateComplete) {
+  while ((timeManager.getRemainingTimeForState(stateId) > 0) && !stateComplete && !timeManager.timeOut) {
+    Serial.println(timeManager.getRemainingTimeForState(stateId));
+    Serial.print("Following Line.");
+    Serial.println(Follow_Line_Counter);
+    if (lineFollower.followLine()) {
+      stateComplete = true;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(150 + random(1500))); // FreeRTOS delay
+    long rand = random(100);
+    Serial.println(rand);
+    if (rand >= 65) {
+      stateComplete = true;
+      Serial.println(stateComplete);
+    }
+  }
+  currentState = nextState;
+  xSemaphoreTake(bufferMutex, portMAX_DELAY);
+  timeManager.endState(stateId, stateComplete);
+  xSemaphoreGive(bufferMutex);
 }
