@@ -16,7 +16,7 @@ void RoboDriver::begin() {
   lineDetect.init();  
 }
 
-bool RoboDriver::followLineUntilTurn() {
+bool RoboDriver::followLineUntilTurn {
   // Follow line until a 90-degree turn is detected
   while (true) {
     lineDetect.refresh();
@@ -28,7 +28,7 @@ bool RoboDriver::followLineUntilTurn() {
     Serial.println(offset);
 
     // Check for 90-degree turn
-    if (abs(angle) >= MaxAngle) {
+    if ((abs(angle) >= MaxAngle)) {
       break;
     }
 
