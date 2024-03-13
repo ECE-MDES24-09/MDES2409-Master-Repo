@@ -1,34 +1,51 @@
 #include "Manipulator_Control.h"
 
-void Manipulator_Control::init() {
+// Initialize the manipulator control (attach servos)
+void Manipulator_Control::init() 
+{
     storageServo.attach(STORAGE_SERVO_PIN);
+    leftRollerServo.attach(LEFT_ROLLER_SERVO_PIN);
+    rightRollerServo.attach(RIGHT_ROLLER_SERVO_PIN);
 }
 
-void Manipulator_Control::setStorageAngle(float angle) {
-    storageServo.write(angle);
+// Move the storage servo to pick up position
+void Manipulator_Control::pickUp() 
+{
+    storageServo.write(pickUpAng);
 }
 
-void Manipulator_Control::updateState() {
-    handleState();
+// Move the storage servo to drop big cube position
+void Manipulator_Control::dropBigCube() 
+{
+    storageServo.write(bigCubeDropAng);
 }
 
-void Manipulator_Control::handleState() {
-    switch (storageState) {
-        case StorageState::BigCubePickUp:
-            // Perform actions for picking up big cube
-            setStorageAngle(pickUpAng);
-            // Transition to next state
-            storageState = StorageState::BigCubeDrop;
-            break;
-        case StorageState::BigCubeDrop:
-            // Perform actions for dropping big cube
-            setStorageAngle(bigCubeDropAng);
-            // Transition to next state
-            storageState = StorageState::Cruise;
-            break;
-        // Add other cases for handling different states as needed
-        default:
-            // Handle default case or unknown states
-            break;
-    }
+// Move the storage servo to drop small cube position
+void Manipulator_Control::dropSmallCube() 
+{
+    storageServo.write(smallCubeDropAng);
+}
+
+// Move the storage servo to drop fuel position
+void Manipulator_Control::dropFuel() 
+{
+    storageServo.write(fuelDropAng);
+}
+
+// Move the storage servo to cruising position
+void Manipulator_Control::cruise() 
+{
+    storageServo.write(crusingAng);
+}
+
+// Set speed for the left roller servo
+void Manipulator_Control::setLeftRollerSpeed(int speed) 
+{
+    leftRollerServo.writeMicroseconds(map(speed, -100, 100, 1000, 2000)); // Assuming speed range is -100 to 100
+}
+
+// Set speed for the right roller servo
+void Manipulator_Control::setRightRollerSpeed(int speed) 
+{
+    rightRollerServo.writeMicroseconds(map(speed, -100, 100, 2000, 1000)); // Assuming speed range is -100 to 100
 }
