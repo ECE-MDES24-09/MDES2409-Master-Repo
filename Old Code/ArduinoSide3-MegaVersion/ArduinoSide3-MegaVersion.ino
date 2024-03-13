@@ -36,8 +36,8 @@ struct pt ptRead, ptProcess, ptPrint;
 
 
 void setup() {
-    Serial.begin(9600);
-    Serial2.begin(9600);
+    Serial.begin(115200);
+    Serial2.begin(115200);
     clearBuffer();
     String dir_json = "{\"0\": \"left\", \"1\": \"right\"}";
     String class_json = "{\"0\": \"BigBox\", \"1\": \"BlueZone\", \"2\": \"Button\", \"3\": \"GreenZone\", \"4\": \"Nozzle\", \"5\": \"RedZone\", \"6\": \"Rocket\", \"7\": \"SmallBox\", \"8\": \"StartZone\", \"9\": \"WhiteLine\", \"10\": \"YellowLine\"}";
@@ -46,8 +46,8 @@ void setup() {
     class_names_dict.jload(class_json);
     class_names_rev.jload(class_rev);
     // Wait for everything to stabilize
-    // delay(60000); // Use this delay if starting at the same time as the Jetson
-    delay(2000); // Use this delay if starting after Jetson is set up and has been running
+    delay(150000); // Use this delay if starting at the same time as the Jetson
+    // delay(2000); // Use this delay if starting after Jetson is set up and has been running
 
     PT_INIT(&ptRead);
     PT_INIT(&ptProcess);

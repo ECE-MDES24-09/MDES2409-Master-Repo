@@ -12,11 +12,11 @@ void RoboDriver::begin() {
   pinMode(3, OUTPUT);
   pinMode(2, OUTPUT);
   // Initialize sensors and modules
-  gyro_init();
-  lineDetect.init();  
+  //gyro_init();
+  //lineDetect.init();  
 }
-
-bool RoboDriver::followLineUntilTurn {
+/**
+bool RoboDriver::followLineUntilTurn() {
   // Follow line until a 90-degree turn is detected
   while (true) {
     lineDetect.refresh();
@@ -37,7 +37,7 @@ bool RoboDriver::followLineUntilTurn {
   }
 
   // Stop the motors after detecting a turn
-  stopMotors();
+  stopTheMotors();
   return true;
 }
 
@@ -63,15 +63,84 @@ void RoboDriver::turn(float turnAngle) {
     motorDriver.startMove();
   }
 }
+**/
 
-void RoboDriver::stopMotors() {
+bool RoboDriver::stopTheMotors() {
   // Function to stop the motors
   motorDriver.setSpeed(0, 0);
   for (int i = 0; i < MotorRunDuration; i++) {
     motorDriver.startMove();
   }
+  return true;
 }
 
+
+bool RoboDriver::startTheMotors() {
+  // Function to stop the motors
+  motorDriver.setSpeed(150, 150);
+  for (int i = 0; i < 200; i++) {
+    motorDriver.startMove();
+  }
+  
+  return true;
+}
+
+bool RoboDriver::circleLeft() {
+  // Function to stop the motors
+  motorDriver.setSpeed(150, -150);
+  for (int i = 0; i < 200; i++) {
+    motorDriver.startMove();
+  }
+  
+  return true;
+}
+
+bool RoboDriver::circleRight() {
+  // Function to stop the motors
+  motorDriver.setSpeed(-150, 150);
+  for (int i = 0; i < 200; i++) {
+    motorDriver.startMove();
+  }
+  
+  return true;
+}
+
+bool RoboDriver::takeItBack() {
+  // Function to stop the motors
+  motorDriver.setSpeed(-150, -150);
+  for (int i = 0; i < 200; i++) {
+    motorDriver.startMove();
+  }
+  
+  return true;
+}
+
+
+bool RoboDriver::doTheJig() {
+  // Function to stop the motors
+  motorDriver.setSpeed(-250, 250);
+  for (int i = 0; i < 125; i++) {
+    motorDriver.startMove();
+  }
+  motorDriver.setSpeed(250, -250);
+  for (int i = 0; i < 125; i++) {
+    motorDriver.startMove();
+  }
+  motorDriver.setSpeed(-250, 250);
+  for (int i = 0; i < 125; i++) {
+    motorDriver.startMove();
+  }
+   motorDriver.setSpeed(250, -250);
+  for (int i = 0; i < 125; i++) {
+    motorDriver.startMove();
+  }
+  motorDriver.setSpeed(0, 0);
+  for (int i = 0; i < MotorRunDuration; i++) {
+    motorDriver.startMove();
+  }
+  
+  return true;
+}
 
 void RoboDriver::constrainTurnSpeed(float &speed) {
   // Constrain the turn speed to a maximum value

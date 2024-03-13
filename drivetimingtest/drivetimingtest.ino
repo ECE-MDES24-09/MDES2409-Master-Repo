@@ -78,6 +78,7 @@ RobotState prevState = WAIT_FOR_START;
 RobotState currentState = WAIT_FOR_START;
 int Follow_Line_Counter = 0;
 
+const int lightSensorPin = A0;  
 
 
 // Obj Detection Variables
@@ -104,7 +105,7 @@ volatile bool printDebugFlag = false;
 // RTOS Vals
 // Emergency Stop Pin
 // Emergency Stop Pin - The "Oh no, everything's on fire" button
-const int emergencyStopPin = 2;  // Example pin
+const int emergencyStopPin = 51;  
 
 
 // Task Handlers - Like employees, but they never ask for a raise
@@ -137,10 +138,13 @@ void StateTimeoutCallback(TimerHandle_t xTimer);
 
 void setup() {
   // Let's set up our circus of tasks and hope they play nice together
-  roboDriver.begin();
+  
 
-  Serial.begin(9600);
-  Serial2.begin(9600);
+  Serial.begin(115200);
+  Serial2.begin(115200);
+  Serial.println("Setup");
+  pinMode(lightSensorPin, INPUT);
+  roboDriver.begin();
   clearBuffer();
   String dir_json = "{\"0\": \"left\", \"1\": \"right\"}";
   String class_json = "{\"0\": \"BigBox\", \"1\": \"BlueZone\", \"2\": \"Button\", \"3\": \"GreenZone\", \"4\": \"Nozzle\", \"5\": \"RedZone\", \"6\": \"Rocket\", \"7\": \"SmallBox\", \"8\": \"StartZone\", \"9\": \"WhiteLine\", \"10\": \"YellowLine\"}";
@@ -166,7 +170,7 @@ void setup() {
 
   xDetectionsEventGroup = xEventGroupCreate();
 
-
+  Serial.println("Setup");
   // Creating our cast of tasks - it's like a talent show, but with more crashing
   xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 1000, NULL, 1, &timeManager.MotorBoxTaskHandle);
   xTaskCreate(SensorBox, "SensorBox", 128, NULL, 2, &SensorBoxTaskHandle);
@@ -176,6 +180,7 @@ void setup() {
   if (debugMode) {
     xTaskCreate(DebugBox, "DebugBox", 200, NULL, 5, &debugTaskHandle);
   }
+  Serial.println("Setup Done");
   // For those who like to live dangerously: Uncomment these lines at your own risk.
   // I mean, what could possibly go wrong?
   // If you choose this ill-advised path comment out the other set of tasks.
@@ -210,6 +215,7 @@ void MotorBoxStateManagement(void *pvParameters) {
   const uint32_t MY_ULONG_MAX = 0xFFFFFFFF;
 
   for (;;) {
+    Serial.println("Motorbox");
     if (xTaskNotifyWait(0x00, MY_ULONG_MAX, &notificationValue, pdMS_TO_TICKS(100)) == pdTRUE) {
       bool timeout = notificationValue != 0;
       // State completed
@@ -364,7 +370,7 @@ void readDetTask(void *pvParameters) {
         Serial2.println("REQUEST");
         // Wait for a response with a timeout
         unsigned long startTime = millis();
-        while (!Serial2.available() && millis() - startTime < 5000) {
+        while (!Serial2.available() && millis() - startTime < 1000) {
           // Waiting for response with 5 seconds timeout
           vTaskDelay(pdMS_TO_TICKS(10));  // Small delay to prevent blocking CPU
         }
@@ -525,9 +531,9 @@ void parseDetection(char *detection) {
   dir_n.toCharArray(direction, MAX_DIRECTION_LENGTH);
 
   Detection newDetection(class_name, confidence, timestamp, depth_mm, x, y, z, horizontal_angle, direction);
-  if (!debugMode) {
-    printDetection(newDetection);
-  }
+  // if (!debugMode) {
+  //   printDetection(newDetection);
+  // }
 
   addDetectionToBuffer(newDetection);
 }
@@ -598,15 +604,28 @@ void debugModeISR() {
 // State Number 0
 // Current Max Time 0 seconds (Doesn't have time limit)
 void wait_for_start() {
-
+  int upperThreshold = 180;
+  int lowerThreshold = 100;
   xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
   vTaskResume(readDetTaskHandle);
   vTaskResume(processDetTaskHandle);
   vTaskDelay(100 / portTICK_PERIOD_MS);
+  int lightSensorValue = analogRead(lightSensorPin);
+  Serial.print("Light Sensor Value: ");
+  Serial.println(lightSensorValue);
   Serial2.println("WAIT_FOR_START");
   Serial.println("Waiting to Start");
-  currentState = GET_BIG_BOXES;
   vTaskDelay(5000 / portTICK_PERIOD_MS);
+  lightSensorValue = analogRead(lightSensorPin);
+  Serial.print("Light Sensor Value: ");
+  Serial.println(lightSensorValue);
+  while (lightSensorValue > upperThreshold) {
+    lightSensorValue = analogRead(lightSensorPin);
+    Serial.print("Light Sensor Value: ");
+    Serial.println(lightSensorValue);
+    vTaskDelay(50 / portTICK_PERIOD_MS);
+  }
+  currentState = GET_BIG_BOXES;
   timeManager.endState(0, false);
 }
 
@@ -622,22 +641,19 @@ void get_big_boxes() {
   Serial2.println("GET_BIG_BOXES");
   while ((timeManager.getRemainingTimeForState(1) > 0) && !stateComplete && !timeManager.timeOut) {
     // vTaskDelay(100 / portTICK_PERIOD_MS);
-
-    Serial.println(timeManager.getRemainingTimeForState(1));
-
-    // xSemaphoreTake(serialMutex, portMAX_DELAY);
     Serial.println("Getting Big Boxes");
-    // xSemaphoreGive(serialMutex);
-    most_recent = getLatestDetection();
-    Serial.println("Most Recent Detection:");
-    printDetection(most_recent);
-    vTaskDelay(pdMS_TO_TICKS(150 + random(1500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    Serial.println(timeManager.getRemainingTimeForState(1));
+    if (roboDriver.circleLeft()) {
+      if (roboDriver.circleRight()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
+    
   }
   xSemaphoreTake(bufferMutex, portMAX_DELAY);
   timeManager.endState(1, stateComplete);
@@ -657,13 +673,7 @@ void get_small_boxes() {
     Serial.println(timeManager.getRemainingTimeForState(2));
     Serial.println("Getting Small Boxes");
     // timeManager.endState(2);
-    vTaskDelay(pdMS_TO_TICKS(150 + random(1500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
-    }
+    roboDriver.doTheJig();
   }
   currentState = FOLLOW_LINE;
   xSemaphoreTake(bufferMutex, portMAX_DELAY);
@@ -686,7 +696,7 @@ void follow_line() {
 
   switch (Follow_Line_Counter) {
     case 0:
-      line_follow(3, DEPOSIT_ROCKETS, GO_TO_RED_ZONE, stateComplete);
+      line_follow(3, DEPOSIT_ROCKETS, Follow_Line_Counter, stateComplete);
       break;
     case 1:
       line_follow(8, GO_TO_GREEN_ZONE, Follow_Line_Counter, stateComplete);
@@ -717,12 +727,15 @@ void deposit_big_boxes() {
   while ((timeManager.getRemainingTimeForState(7) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(7));
     Serial.println("Depositing Big Boxes");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    if (roboDriver.takeItBack()) {
+      if (roboDriver.startTheMotors()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
   }
   currentState = FOLLOW_LINE;
@@ -744,12 +757,15 @@ void deposit_small_boxes() {
   while ((timeManager.getRemainingTimeForState(5) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(5));
     Serial.println("Depositing Small Boxes");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    if (roboDriver.circleLeft()) {
+      if (roboDriver.circleRight()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
   }
   currentState = GO_TO_BLUE_ZONE;
@@ -771,13 +787,7 @@ void go_to_red_zone() {
   while ((timeManager.getRemainingTimeForState(4) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(4));
     Serial.println("Going to Red Zone");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
-    }
+    roboDriver.doTheJig();
   }
   currentState = DEPOSIT_SMALL_BOXES;
   xSemaphoreTake(bufferMutex, portMAX_DELAY);
@@ -797,12 +807,15 @@ void go_to_blue_zone() {
   while ((timeManager.getRemainingTimeForState(6) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(6));
     Serial.println("Going to Blue Zone");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    if (roboDriver.startTheMotors()) {
+      if (roboDriver.takeItBack()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
   }
   currentState = DEPOSIT_BIG_BOXES;
@@ -825,12 +838,15 @@ void go_to_green_zone() {
   while ((timeManager.getRemainingTimeForState(9) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(9));
     Serial.println("Going to Green Zone");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(1500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    if (roboDriver.circleLeft()) {
+      if (roboDriver.circleRight()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
   }
   currentState = GET_ROCKETS;
@@ -850,13 +866,7 @@ void get_rockets() {
   while ((timeManager.getRemainingTimeForState(10) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(10));
     Serial.println("Getting Rockets");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
-    }
+    roboDriver.doTheJig();
   }
   currentState = FOLLOW_LINE;
   xSemaphoreTake(bufferMutex, portMAX_DELAY);
@@ -876,12 +886,15 @@ void deposit_rockets() {
   while ((timeManager.getRemainingTimeForState(14) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(14));
     Serial.println("Depositing Rockets");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(1500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    if (roboDriver.takeItBack()) {
+      if (roboDriver.startTheMotors()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
   }
   currentState = DISPLAY_LOGO;
@@ -900,12 +913,15 @@ void cross_gap() {
   while ((timeManager.getRemainingTimeForState(12) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(12));
     Serial.println("Crossing Gap");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(1500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    if (roboDriver.circleRight()) {
+        if (roboDriver.circleLeft()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
   }
   currentState = FOLLOW_LINE;
@@ -924,13 +940,8 @@ void display_logo() {
   while ((timeManager.getRemainingTimeForState(15) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(15));
     Serial.println("Displaying Logo");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
-    }
+    roboDriver.doTheJig();
+
   }
   currentState = PUSH_BUTTON;
   xSemaphoreTake(bufferMutex, portMAX_DELAY);
@@ -950,12 +961,15 @@ void push_button() {
   while ((timeManager.getRemainingTimeForState(16) > 0) && !stateComplete && !timeManager.timeOut) {
     Serial.println(timeManager.getRemainingTimeForState(16));
     Serial.println("Pushing Button");
-    vTaskDelay(pdMS_TO_TICKS(150 + random(500)));  // Delay for 1 to 5 seconds  // FreeRTOS delay
-    long rand = random(100);
-    Serial.println(rand);
-    if (rand >= 65) {
-      stateComplete = true;
-      Serial.println(stateComplete);
+    if (roboDriver.circleRight()) {
+        if (roboDriver.circleLeft()) {
+        if(timeManager.getRemainingTimeForState(1) < 1500) {
+          if (roboDriver.stopTheMotors()) {
+            stateComplete = true;
+            break;
+          }
+        }
+      }
     }
   }
   currentState = DONE;
@@ -994,6 +1008,8 @@ void done() {
   // if (debugMode){
   //   vTaskResume( debugTaskHandle );
   // }
+  if (roboDriver.stopTheMotors()) {
+  }
   timeManager.endState(17, stateComplete);
 }
 
@@ -1016,8 +1032,13 @@ void line_follow(int stateId, RobotState nextState, int Follow_Line_Counter, boo
     Serial.println(timeManager.getRemainingTimeForState(stateId));
     Serial.print("Following Line.");
     Serial.println(Follow_Line_Counter);
-    if (roboDriver.followLineUntilTurn()) {
-      stateComplete = true;
+    if (roboDriver.startTheMotors()) {
+      if(timeManager.getRemainingTimeForState(stateId) < 1500) {
+        if (roboDriver.stopTheMotors()) {
+          stateComplete = true;
+          break;
+        }
+      }
     }
 
     // vTaskDelay(pdMS_TO_TICKS(150 + random(1500)));  // FreeRTOS delay
