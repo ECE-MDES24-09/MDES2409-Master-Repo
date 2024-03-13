@@ -1,0 +1,14 @@
+0000000000000000000000000000000000000000 88dec2016b90fef3100e6478797c7104203a1fe7 Governor Clark <Governator500@vt.edu> 1708532146 -0500	clone: from https://github.com/ECE-MDES24-09/MDES2409-Master-Repo.git
+88dec2016b90fef3100e6478797c7104203a1fe7 cabf0bab880102e298a27e941fe98b0eb4cac324 Governor Clark <Governator500@vt.edu> 1708532212 -0500	checkout: moving from main to jordan
+cabf0bab880102e298a27e941fe98b0eb4cac324 08eb70589237273eb0ccef6f96c4763f15ba30be Governor Clark <Governator500@vt.edu> 1708532399 -0500	pull: Fast-forward
+08eb70589237273eb0ccef6f96c4763f15ba30be c0bc6785ad9444e18b475c800ee7a18e7906b148 Governor Clark <Governator500@vt.edu> 1708532479 -0500	checkout: moving from jordan to governor
+c0bc6785ad9444e18b475c800ee7a18e7906b148 08eb70589237273eb0ccef6f96c4763f15ba30be Governor Clark <Governator500@vt.edu> 1708532529 -0500	checkout: moving from governor to jordan
+08eb70589237273eb0ccef6f96c4763f15ba30be c0bc6785ad9444e18b475c800ee7a18e7906b148 Governor Clark <Governator500@vt.edu> 1708532566 -0500	checkout: moving from jordan to governor
+c0bc6785ad9444e18b475c800ee7a18e7906b148 08eb70589237273eb0ccef6f96c4763f15ba30be Governor Clark <Governator500@vt.edu> 1708872259 -0500	checkout: moving from governor to jordan
+08eb70589237273eb0ccef6f96c4763f15ba30be 3e9208c76287571fcc8a82f17139ba45a7e7b092 Governor Clark <Governator500@vt.edu> 1708872269 -0500	pull: Fast-forward
+3e9208c76287571fcc8a82f17139ba45a7e7b092 6ff213d30a3c5335e915c5b0a8453e477ba38452 Governor Clark <Governator500@vt.edu> 1709134399 -0500	pull: Fast-forward
+6ff213d30a3c5335e915c5b0a8453e477ba38452 c0bc6785ad9444e18b475c800ee7a18e7906b148 Governor Clark <Governator500@vt.edu> 1709553825 -0500	checkout: moving from jordan to governor
+c0bc6785ad9444e18b475c800ee7a18e7906b148 96345c7b4426117f5af7ca7b7562d43a4d8d8ac2 Governor Clark <Governator500@vt.edu> 1709553901 -0500	commit: Added queue that can send info through queue/ Messed with task running
+96345c7b4426117f5af7ca7b7562d43a4d8d8ac2 6ff213d30a3c5335e915c5b0a8453e477ba38452 Governor Clark <Governator500@vt.edu> 1710345116 -0400	checkout: moving from governor to jordan
+6ff213d30a3c5335e915c5b0a8453e477ba38452 b9be9146421d56a08f23eceae8a0c21aac7aa879 Governor Clark <Governator500@vt.edu> 1710345128 -0400	pull: Fast-forward
+b9be9146421d56a08f23eceae8a0c21aac7aa879 f7a7b746271d43913d005420b08942890a3131d0 Governor Clark <Governator500@vt.edu> 1710346017 -0400	pull: Fast-forward
