@@ -5,7 +5,7 @@
 #include <DetectionsBuffer.h>
 #include <Dictionary.h>
 #include <SoftwareSerial.h>
-#include "TimeManagement.h"
+#include <TimeManagement.h>
 #include <RoboDriver.h>
 #include <globalVariables.h>
 /**
@@ -47,6 +47,7 @@
 // And I built its time management system. Sigh.
 TimeManagement timeManager;
 // LineFollower lineFollower(200, 90);
+Gyro gyro;
 
 // Task Handlers - Like employees, but they never ask for a raise
 TaskHandle_t readDetTaskHandle;
@@ -98,6 +99,9 @@ void setup() {
   
   //Inantiate Sensor Queue
   sensorQueue = xQueueCreate(10, sizeof(sensorData));
+
+  //INitialize Gyro
+  // gyro.gyro_init();
 
   // Create a mutex for state variable and serial
   stateMutex = xSemaphoreCreateMutex();
@@ -296,8 +300,9 @@ void SensorBox(void *pvParameters){
       // Serial.println("Sensor Task");
       sensorData data;
       data.intValue = 42;
-      data.floatValue = 38.0;
-
+      data.floatValue = 0;
+      //gyro.getGyroAng();
+      
       if (xQueueSend(sensorQueue, &data, portMAX_DELAY) != pdPASS)
       {
         //Failed to send data to queue
