@@ -1,16 +1,12 @@
-#ifndef SERIAL_COMMUNICATION_H
-#define SERIAL_COMMUNICATION_H
-
-#define DATA_LENGTH 5
-#define START_WORD "START"
-#define START_WORD_LEN 5
-
-#include "Arduino.h"
+//
+// Created by jorda on 03/15/2024.
+//
+#include "serial_communication.h"
 
 unsigned long lastTimeRecevieData = 0;
 
 byte* getSerialData() {
-    static byte data[DATA_LENGTH] = { 0, 0, 0 }; // Data buffer initialized to zeros
+        static byte data[DATA_LENGTH] = { 0, 0, 0 }; // Data buffer initialized to zeros
     static char buffer[128]; // Buffer to store incoming characters plus "START"
     static int bufferIndex = 0; // Current position in the buffer
 
@@ -51,7 +47,3 @@ byte* getSerialData() {
     static byte notData[DATA_LENGTH] = { 0, 0, 0, 0, 0};
     return notData; // Returning NULL signifies that no valid data is available
 }
-
-
-
-#endif
