@@ -1,12 +1,14 @@
+//
+// Created by jorda on 03/15/2024.
+//
 #include "pixy_line_detection.h"
 
-
- void pixyLineDetect::init() {
+void PixyLineDetect::init() {
 	pixy.init();
 	Serial.println(pixy.changeProg("line"));
 }
 
-void pixyLineDetect::refresh() {
+void PixyLineDetect::update() {
 	pixy.line.getMainFeatures();
 	if (pixy.line.numVectors) {
 		x0 = (double)pixy.line.vectors->m_x0;
@@ -16,7 +18,7 @@ void pixyLineDetect::refresh() {
 	}
 }
 
-double pixyLineDetect::getAng() const {
+double PixyLineDetect::getAng() const {
 	xy xyout1 = findHorXY(x0, y0);
 	xy xyout2 = findHorXY(x1, y1);
 
@@ -37,7 +39,7 @@ double pixyLineDetect::getAng() const {
 	return atan((xo1 - xo2) / (yo1 - yo2)) / M_PI * 180.0;
 }
 
-double pixyLineDetect::getAng(double maxAng) const {
+double PixyLineDetect::getAng(double maxAng) const {
 	double ang = getAng();
 
 	if (ang > maxAng)
@@ -46,7 +48,7 @@ double pixyLineDetect::getAng(double maxAng) const {
 	return ang;
 }
 
-double pixyLineDetect::getOS() const {
+double PixyLineDetect::getOffset() const {
 
 	double ang_rad = getAng() / 180.0 * M_PI;
 	xy xyo = findHorXY(x0, y0);
@@ -55,7 +57,7 @@ double pixyLineDetect::getOS() const {
 	return -xo0;
 }
 
-double pixyLineDetect::getOS(double maxAng) const {
+double PixyLineDetect::getOffset(double maxAng) const {
 	double ang_rad = getAng(maxAng) / 180.0 * M_PI;
 	xy xyo = findHorXY(x0, y0);
 	double xo0 = xyo.x * cos(ang_rad) - xyo.y * sin(ang_rad);
@@ -63,7 +65,7 @@ double pixyLineDetect::getOS(double maxAng) const {
 	return -xo0;
 }
 
-xy pixyLineDetect::findHorXY(double x, double y) const {
+xy PixyLineDetect::findHorXY(double x, double y) const {
 
 	double x_range = HOR_PIXEL - 1.0;
 	double y_range = VER_PIXEL - 1.0;
@@ -95,3 +97,4 @@ xy pixyLineDetect::findHorXY(double x, double y) const {
 	return xyout;
 
 }
+
