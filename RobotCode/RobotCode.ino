@@ -377,6 +377,7 @@ void parseDetection(char* detection) {
 }
 
 
+
 void printDetections() {
     // Print the closest detection
     Detection closest = getClosestDetection();
