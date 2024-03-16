@@ -28,9 +28,10 @@
     #define BIT_READ_DETECTIONS    (1 << 1)
 
     // Full Run
-    inline constexpr int NUM_STATES = 19;
+    //inline constexpr int NUM_STATES = 19;
     // Move Around Board Run
-    // constexpr int NUM_STATES = 9;
+    // inline constexpr int NUM_STATES = 9;
+    #define NUM_STATES 9
     inline const int lightSensorPin = A0;
     inline const int threshold = 160;
 

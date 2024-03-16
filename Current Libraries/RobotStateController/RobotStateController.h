@@ -58,6 +58,46 @@ private:
     State* robotPrevState{};
     State* robotNextState{};
 
+    /**
+    // States for Full Run
+    State states[NUM_STATES] = {
+        {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
+        {State(GET_BIG_BOXES, 0, &RobotStateController::get_big_boxes, &states[0], &states[2])}, // 1
+        {State(GET_SMALL_BOXES, 0, &RobotStateController::get_small_boxes, &states[1], &states[3])}, // 2
+        {State(FOLLOW_LINE, 0, &RobotStateController::follow_line, &states[2], &states[4])}, // 3
+        {State(GO_TO_RED_ZONE, 1, &RobotStateController::go_to_red_zone, &states[3], &states[5])}, // 4
+        {State(DEPOSIT_SMALL_BOXES, 0, &RobotStateController::deposit_small_boxes, &states[4], &states[6])}, // 5
+        {State(GO_TO_BLUE_ZONE, 1, &RobotStateController::go_to_blue_zone, &states[5], &states[7])}, // 6
+        {State(DEPOSIT_BIG_BOXES, 0, &RobotStateController::deposit_big_boxes, &states[6], &states[8])}, // 7
+        {State(FOLLOW_LINE, 1, &RobotStateController::follow_line, &states[7], &states[9])}, // 8
+        {State(GO_TO_GREEN_ZONE, 1, &RobotStateController::go_to_green_zone, &states[8], &states[10])}, // 9
+        {State(GET_ROCKETS, 1, &RobotStateController::get_rockets, &states[9], &states[11])}, // 10
+        {State(FOLLOW_LINE, 2, &RobotStateController::follow_line, &states[10], &states[12])}, // 11
+        {State(CROSS_GAP, 2, &RobotStateController::cross_gap, &states[11], &states[13])}, // 12
+        {State(FOLLOW_LINE, 3, &RobotStateController::follow_line, &states[12], &states[14])}, // 13
+        {State(DEPOSIT_ROCKETS, 3, &RobotStateController::deposit_rockets, &states[13], &states[15])}, // 14
+        {State(DISPLAY_LOGO, 3, &RobotStateController::display_logo, &states[14], &states[16])}, // 15
+        {State(PUSH_BUTTON, 3, &RobotStateController::push_button, &states[15], &states[17])}, // 16
+        {State(DONE, 3, &RobotStateController::done, &states[16], &states[0])}, // 17
+        {State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr)}, // 18
+    };
+    **/
+
+    // Move around Board Run
+    State states[NUM_STATES] = {
+        {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
+        {State(FOLLOW_LINE, 0, &RobotStateController::follow_line, &states[0], &states[2])}, // 1
+        //{State(GO_TO_RED_ZONE, 1, &RobotStateController::go_to_red_zone, &states[3], &states[5])}, // 4
+        //{State(GO_TO_BLUE_ZONE, 1, &RobotStateController::go_to_blue_zone, &states[5], &states[7])}, // 6
+        {State(FOLLOW_LINE, 1, &RobotStateController::follow_line, &states[1], &states[3])}, // 2
+        //{State(GO_TO_GREEN_ZONE, 1, &RobotStateController::go_to_green_zone, &states[8], &states[10])}, // 9
+        {State(FOLLOW_LINE, 2, &RobotStateController::follow_line, &states[2], &states[4])}, // 3
+        {State(CROSS_GAP, 2, &RobotStateController::cross_gap, &states[3], &states[5])}, // 4
+        {State(FOLLOW_LINE, 3, &RobotStateController::follow_line, &states[4], &states[6])}, // 5
+        {State(PUSH_BUTTON, 3, &RobotStateController::push_button, &states[5], &states[7])}, // 6
+        {State(DONE, 3, &RobotStateController::done, &states[6], &states[0])}, // 7
+        {State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr)}, // 8
+    };
 
     // State handling methods
     void wait_for_start();
@@ -98,7 +138,5 @@ public:
     TaskHandle_t readDetTaskHandle{};
     TaskHandle_t processDetTaskHandle{};
     EventGroupHandle_t xDetectionsEventGroup{};
-
-    State states[NUM_STATES];
 };
 #endif //ROBOTSTATECONTROLLER_H

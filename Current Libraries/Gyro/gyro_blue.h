@@ -1,5 +1,6 @@
 #include "MPU9250.h"
 #include <MadgwickAHRS.h>
+#include <globalVariables.h>
 
 #define CALIBRATE false
 

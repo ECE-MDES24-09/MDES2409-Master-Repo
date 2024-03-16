@@ -56,9 +56,8 @@ void State::setNext(State* newNext) {
 
 State::~State() = default;
 
-State::State(const RobotState state = WAIT_FOR_START, const int follow_line_counter = 0,
-    const StateFunc func = nullptr, State* const prev = nullptr, State* const next = nullptr)
-    : currState(state),
+State::State(const RobotState state, const int follow_line_counter, const StateFunc func, State* const prev,
+    State* const next) : currState(state),
     followLineCounter(follow_line_counter),
     func(func),
     prev(prev),
@@ -69,44 +68,6 @@ State::State(const RobotState state = WAIT_FOR_START, const int follow_line_coun
  * These are the the functions for the RobotStateController Class
  */
 RobotStateController::RobotStateController() {
-    /**
-   // States for Full Run
-       states[0] = State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1]); // 0
-       states[1] = State(GET_BIG_BOXES, 0, &RobotStateController::get_big_boxes, &states[0], &states[2]); // 1
-       states[2] = State(GET_SMALL_BOXES, 0, &RobotStateController::get_small_boxes, &states[1], &states[3]); // 2
-       states[3] = State(FOLLOW_LINE, 0, &RobotStateController::follow_line, &states[2], &states[4]); // 3
-       states[4] = State(GO_TO_RED_ZONE, 1, &RobotStateController::go_to_red_zone, &states[3], &states[5]); // 4
-       states[5] = State(DEPOSIT_SMALL_BOXES, 0, &RobotStateController::deposit_small_boxes, &states[4], &states[6]); // 5
-       states[6] = State(GO_TO_BLUE_ZONE, 1, &RobotStateController::go_to_blue_zone, &states[5], &states[7]); // 6
-       states[7] = State(DEPOSIT_BIG_BOXES, 0, &RobotStateController::deposit_big_boxes, &states[6], &states[8]); // 7
-       states[8] = State(FOLLOW_LINE, 1, &RobotStateController::follow_line, &states[7], &states[9]); // 8
-       states[9] = State(GO_TO_GREEN_ZONE, 1, &RobotStateController::go_to_green_zone, &states[8], &states[10]); // 9
-       states[10] = State(GET_ROCKETS, 1, &RobotStateController::get_rockets, &states[9], &states[11]); // 10
-       states[11] = State(FOLLOW_LINE, 2, &RobotStateController::follow_line, &states[10], &states[12]); // 11
-       states[12] = State(CROSS_GAP, 2, &RobotStateController::cross_gap, &states[11], &states[13]); // 12
-       states[13] = State(FOLLOW_LINE, 3, &RobotStateController::follow_line, &states[12], &states[14]); // 13
-       states[14] = State(DEPOSIT_ROCKETS, 3, &RobotStateController::deposit_rockets, &states[13], &states[15]); // 14
-       states[15] = State(DISPLAY_LOGO, 3, &RobotStateController::display_logo, &states[14], &states[16]); // 15
-       states[16] = State(PUSH_BUTTON, 3, &RobotStateController::push_button, &states[15], &states[17]); // 16
-       states[17] = State(DONE, 3, &RobotStateController::done, &states[16], &states[0]); // 17
-       states[18] = State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr); // 18
-   };
-   **/
-
-   // Move around Board Run
-    states[0] = State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, nullptr); // 0
-    states[1] = State(FOLLOW_LINE, 0, &RobotStateController::follow_line, &states[0], &states[2]); // 1
-    //states[4] = {State(GO_TO_RED_ZONE, 1, &RobotStateController::go_to_red_zone, &states[3], &states[5])}; // 4
-    //states[6] = {State(GO_TO_BLUE_ZONE, 1, &RobotStateController::go_to_blue_zone, &states[5], &states[7])}; // 6
-    states[2] = State(FOLLOW_LINE, 1, &RobotStateController::follow_line, &states[1], &states[3]); // 2
-    //states[9] = {State(GO_TO_GREEN_ZONE, 1, &RobotStateController::go_to_green_zone, &states[8], &states[10])}; // 9
-    states[3] = State(FOLLOW_LINE, 2, &RobotStateController::follow_line, &states[2], &states[4]); // 3
-    states[4] = State(CROSS_GAP, 2, &RobotStateController::cross_gap, &states[3], &states[5]); // 4
-    states[5] = State(FOLLOW_LINE, 3, &RobotStateController::follow_line, &states[4], &states[6]); // 5
-    states[6] = State(PUSH_BUTTON, 3, &RobotStateController::push_button, &states[5], &states[7]); // 6
-    states[7] = State(DONE, 3, &RobotStateController::done, &states[6], &states[0]); // 7
-    states[8] = State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr); // 8
-
     pinMode(lightSensorPin, INPUT);
     // Initialize the robotCurrentState to the first state.
     robotCurrentState = &states[0];
@@ -383,7 +344,7 @@ void RobotStateController::follow_line() {
     vTaskSuspend(readDetTaskHandle);
     vTaskSuspend(processDetTaskHandle);
     Serial.println("In Task");
-    robotControl.lineFollow(0, 0.0);
+    robotControl.lineFollow(200, 70);
     //vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
 }
