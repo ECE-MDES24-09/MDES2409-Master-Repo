@@ -10,6 +10,7 @@
  **/
 
 
+<<<<<<< HEAD
  /**
   * Boolean Equals Operators
  **/
@@ -22,6 +23,20 @@ bool operator==(const State& lhs, const State& rhs) {
 }
 
 bool operator!=(const State& lhs, const State& rhs) {
+=======
+/**
+ * Boolean Equals Operators
+**/
+bool operator==(const State &lhs, const State &rhs) {
+    return lhs.currState == rhs.currState
+           && lhs.followLineCounter == rhs.followLineCounter
+           && lhs.func == rhs.func
+           && lhs.prev == rhs.prev
+           && lhs.next == rhs.next;
+}
+
+bool operator!=(const State &lhs, const State &rhs) {
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     return !(lhs == rhs);
 }
 
@@ -38,6 +53,7 @@ void State::setFunc(StateFunc newFunc) {
     func = newFunc;
 }
 
+<<<<<<< HEAD
 State* State::getPrev() const {
     return prev;
 }
@@ -51,17 +67,41 @@ State* State::getNext() const {
 }
 
 void State::setNext(State* newNext) {
+=======
+State *State::getPrev() const {
+    return prev;
+}
+
+void State::setPrev(State *newPrev) {
+    prev = newPrev;
+}
+
+State *State::getNext() const {
+    return next;
+}
+
+void State::setNext(State *newNext) {
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     next = newNext;
 }
 
 State::~State() = default;
 
+<<<<<<< HEAD
 State::State(const RobotState state, const int follow_line_counter, const StateFunc func, State* const prev,
     State* const next) : currState(state),
     followLineCounter(follow_line_counter),
     func(func),
     prev(prev),
     next(next) {
+=======
+State::State(const RobotState state, const int follow_line_counter, const StateFunc func, State *const prev,
+             State *const next): currState(state),
+                                 followLineCounter(follow_line_counter),
+                                 func(func),
+                                 prev(prev),
+                                 next(next) {
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 }
 
 /**
@@ -89,12 +129,17 @@ void RobotStateController::update() {
         Serial.print(getStateName(robotCurrentState->getCurrentState()));
         Serial.print(".");
         Serial.println(followLineCounter);
+<<<<<<< HEAD
     }
     else {
+=======
+    } else {
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
         Serial2.println(getStateName(robotCurrentState->getCurrentState()));
         Serial.println(getStateName(robotCurrentState->getCurrentState()));
     }
     switch (currentState) {
+<<<<<<< HEAD
     case WAIT_FOR_START:
         // Code to handle waiting for start
         // Green Light stuff, yada yada
@@ -166,6 +211,79 @@ void RobotStateController::update() {
 }
 
 void RobotStateController::setState(State * newState) {
+=======
+        case WAIT_FOR_START:
+            // Code to handle waiting for start
+            // Green Light stuff, yada yada
+            wait_for_start();
+            break;
+        case GET_BIG_BOXES:
+            // Code for getting big blocks
+            get_big_boxes();
+            break;
+        case GET_SMALL_BOXES:
+            // Code for getting small blocks
+            get_small_boxes();
+            break;
+        case DEPOSIT_BIG_BOXES:
+            // Code for depositing big blocks
+            deposit_big_boxes();
+            break;
+        case DEPOSIT_SMALL_BOXES:
+            // Code for depositing small blocks
+            deposit_small_boxes();
+            break;
+        case FOLLOW_LINE:
+            // Code to follow the yellow line
+            follow_line();
+            break;
+        case GO_TO_RED_ZONE:
+            // Code to go to the red zone
+            go_to_red_zone();
+            break;
+        case GO_TO_BLUE_ZONE:
+            // Code to go to the blue zone
+            go_to_blue_zone();
+            break;
+        case GO_TO_GREEN_ZONE:
+            // Code to go to the green zone
+            go_to_green_zone();
+            break;
+        case GET_ROCKETS:
+            // Code for getting rockets
+            get_rockets();
+            break;
+        case DEPOSIT_ROCKETS:
+            // Code for depositing rockets
+            deposit_rockets();
+            break;
+        case CROSS_GAP:
+            // Code to cross the gap
+            cross_gap();
+            break;
+        case PUSH_BUTTON:
+            // Code to push stop timer button
+            push_button();
+            break;
+        case DISPLAY_LOGO:
+            // Code to display the logo
+            display_logo();
+            break;
+        case DONE:
+            // Code for stopping when all tasks completed
+            done();
+            break;
+        case EMERGENCY_STOP:
+            // Code for emergency stop
+            emergency_stop();
+            break;
+        default:
+            break;
+    }
+}
+
+void RobotStateController::setState(State *newState) {
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     robotCurrentState = newState;
     robotPrevState = robotCurrentState->prev;
     robotNextState = robotCurrentState->next;
@@ -193,6 +311,7 @@ void RobotStateController::init() {
     robotControl.init();
 }
 
+<<<<<<< HEAD
 State* RobotStateController::getPrevState() {
     return robotCurrentState->prev;
 }
@@ -202,6 +321,17 @@ State* RobotStateController::getCurrentState() {
 }
 
 State* RobotStateController::getNextState() {
+=======
+State *RobotStateController::getPrevState() {
+    return robotCurrentState->prev;
+}
+
+State *RobotStateController::getCurrentState() {
+    return robotCurrentState;
+}
+
+State *RobotStateController::getNextState() {
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     return robotCurrentState->next;
 }
 
@@ -209,6 +339,7 @@ RobotState RobotStateController::getCurrentRobotState() {
     return robotCurrentState->currState;
 }
 
+<<<<<<< HEAD
 State* RobotStateController::getState(RobotState searchState, int lineFollowCounter = 0) {
     switch (searchState) {
     case WAIT_FOR_START: return &states[0];
@@ -238,10 +369,42 @@ State* RobotStateController::getState(RobotState searchState, int lineFollowCoun
     case PUSH_BUTTON: return &states[16];
     case DONE: return &states[17];
     default: return &states[18];
+=======
+State *RobotStateController::getState(RobotState searchState, int lineFollowCounter=0) {
+    switch (searchState) {
+        case WAIT_FOR_START: return &states[0];
+        case GET_BIG_BOXES: return &states[1];
+        case GET_SMALL_BOXES: return &states[2];
+        case DEPOSIT_BIG_BOXES: return &states[7];
+        case DEPOSIT_SMALL_BOXES: return &states[5];
+        case FOLLOW_LINE:
+            switch (lineFollowCounter) {
+                case 0:
+                    return &states[3];
+                case 1:
+                    return &states[8];
+                case 2:
+                    return &states[11];
+                case 3:
+                    return &states[13];
+                default: return &states[18];
+            }
+        case GO_TO_RED_ZONE: return &states[4];
+        case GO_TO_BLUE_ZONE: return &states[6];
+        case GO_TO_GREEN_ZONE: return &states[9];
+        case GET_ROCKETS: return &states[10];
+        case DEPOSIT_ROCKETS: return &states[14];
+        case CROSS_GAP: return &states[12];
+        case DISPLAY_LOGO: return &states[15];
+        case PUSH_BUTTON: return &states[16];
+        case DONE: return &states[17];
+        default: return &states[18];
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     }
 }
 
 
+<<<<<<< HEAD
 int RobotStateController::getStateNum(RobotState searchState, int lineFollowCounter = 0) {
     switch (searchState) {
     case WAIT_FOR_START: return 0;
@@ -272,6 +435,38 @@ int RobotStateController::getStateNum(RobotState searchState, int lineFollowCoun
     case DONE: return 17;
     case EMERGENCY_STOP: return 18;
     default: return 18;
+=======
+int RobotStateController::getStateNum(RobotState searchState, int lineFollowCounter=0) {
+    switch (searchState) {
+        case WAIT_FOR_START: return 0;
+        case GET_BIG_BOXES: return 1;
+        case GET_SMALL_BOXES: return 2;
+        case DEPOSIT_BIG_BOXES: return 7;
+        case DEPOSIT_SMALL_BOXES: return 5;
+        case FOLLOW_LINE:
+            switch (lineFollowCounter) {
+                case 0:
+                    return 3;
+                case 1:
+                    return 8;
+                case 2:
+                    return 11;
+                case 3:
+                    return 13;
+                default: return 18;
+            }
+        case GO_TO_RED_ZONE: return 4;
+        case GO_TO_BLUE_ZONE: return 6;
+        case GO_TO_GREEN_ZONE: return 9;
+        case GET_ROCKETS: return 10;
+        case DEPOSIT_ROCKETS: return 14;
+        case CROSS_GAP: return 12;
+        case DISPLAY_LOGO: return 15;
+        case PUSH_BUTTON: return 16;
+        case DONE: return 17;
+        case EMERGENCY_STOP: return 18;
+        default: return 18;
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     }
 }
 
@@ -291,9 +486,15 @@ int RobotStateController::getLineFollowCounter() {
 /**
  * These are the State Functions.
  **/
+<<<<<<< HEAD
  // wait_for_start - because patience is a virtue, or so I'm told
  // State Number 0
  // Current Max Time 0 seconds (Doesn't have time limit)
+=======
+// wait_for_start - because patience is a virtue, or so I'm told
+// State Number 0
+// Current Max Time 0 seconds (Doesn't have time limit)
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 void RobotStateController::wait_for_start() {
     xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
     vTaskResume(readDetTaskHandle);
@@ -316,8 +517,13 @@ void RobotStateController::wait_for_start() {
 // Current Max Time 10 seconds
 void RobotStateController::get_big_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskResume(readDetTaskHandle);
     vTaskResume(processDetTaskHandle);
+=======
+    vTaskResume( readDetTaskHandle );
+    vTaskResume( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     Serial.println("In Task");
     xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
     vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -329,8 +535,13 @@ void RobotStateController::get_big_boxes() {
 // Current Max Time 10 seconds
 void RobotStateController::get_small_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskResume(readDetTaskHandle);
     vTaskResume(processDetTaskHandle);
+=======
+    vTaskResume( readDetTaskHandle );
+    vTaskResume( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     Serial.println("In Task");
     proceed();
 }
@@ -341,8 +552,13 @@ void RobotStateController::get_small_boxes() {
 // Current Max Times 7, 5, 5, and 5 seconds respectively
 void RobotStateController::follow_line() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskSuspend(readDetTaskHandle);
     vTaskSuspend(processDetTaskHandle);
+=======
+    vTaskSuspend( readDetTaskHandle );
+    vTaskSuspend( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     Serial.println("In Task");
     robotControl.lineFollow(200, 70);
     //vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -354,8 +570,13 @@ void RobotStateController::follow_line() {
 // Current Max Time 3 seconds
 void RobotStateController::deposit_big_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskSuspend(readDetTaskHandle);
     vTaskSuspend(processDetTaskHandle);
+=======
+    vTaskSuspend( readDetTaskHandle );
+    vTaskSuspend( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     Serial.println("In Task");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
@@ -367,8 +588,13 @@ void RobotStateController::deposit_big_boxes() {
 // Current Max Time 3 seconds
 void RobotStateController::deposit_small_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskSuspend(readDetTaskHandle);
     vTaskSuspend(processDetTaskHandle);
+=======
+    vTaskSuspend( readDetTaskHandle );
+    vTaskSuspend( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     Serial.println("In Task");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
@@ -379,8 +605,13 @@ void RobotStateController::deposit_small_boxes() {
 // Current Max Time 4 seconds
 void RobotStateController::go_to_red_zone() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskResume(readDetTaskHandle);
     vTaskResume(processDetTaskHandle);
+=======
+    vTaskResume( readDetTaskHandle );
+    vTaskResume( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
     Serial.println("In Task");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -393,8 +624,13 @@ void RobotStateController::go_to_red_zone() {
 // Current Max Time 2 seconds
 void RobotStateController::go_to_blue_zone() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskResume(readDetTaskHandle);
     vTaskResume(processDetTaskHandle);
+=======
+    vTaskResume( readDetTaskHandle );
+    vTaskResume( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     Serial.println("In Task");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
@@ -405,8 +641,13 @@ void RobotStateController::go_to_blue_zone() {
 // Current Max Time 3 seconds
 void RobotStateController::go_to_green_zone() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+<<<<<<< HEAD
     vTaskResume(readDetTaskHandle);
     vTaskResume(processDetTaskHandle);
+=======
+    vTaskResume( readDetTaskHandle );
+    vTaskResume( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
     Serial.println("In Task");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -474,11 +715,19 @@ void RobotStateController::push_button() {
 void RobotStateController::done() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.println("In Task");
+<<<<<<< HEAD
     vTaskSuspend(readDetTaskHandle);
     vTaskSuspend(processDetTaskHandle);
     vTaskDelay(10000 / portTICK_PERIOD_MS);
     vTaskResume(readDetTaskHandle);
     vTaskResume(processDetTaskHandle);
+=======
+    vTaskSuspend( readDetTaskHandle );
+    vTaskSuspend( processDetTaskHandle );
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+    vTaskResume( readDetTaskHandle );
+    vTaskResume( processDetTaskHandle );
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     //proceed();
 }
 
@@ -492,6 +741,7 @@ void RobotStateController::emergency_stop() {
     proceed();
 }
 
+<<<<<<< HEAD
 const char* RobotStateController::getStateName(RobotState state) {
     switch (state) {
     case WAIT_FOR_START: return "WAIT_FOR_START";
@@ -513,3 +763,26 @@ const char* RobotStateController::getStateName(RobotState state) {
     default: return "UNKNOWN_STATE";
     }
 }
+=======
+const char *RobotStateController::getStateName(RobotState state) {
+    switch (state) {
+        case WAIT_FOR_START: return "WAIT_FOR_START";
+        case GET_BIG_BOXES: return "GET_BIG_BOXES";
+        case GET_SMALL_BOXES: return "GET_SMALL_BOXES";
+        case DEPOSIT_BIG_BOXES: return "DEPOSIT_BIG_BOXES";
+        case DEPOSIT_SMALL_BOXES: return "DEPOSIT_SMALL_BOXES";
+        case FOLLOW_LINE: return "FOLLOW_LINE";
+        case GO_TO_RED_ZONE: return "GO_TO_RED_ZONE";
+        case GO_TO_BLUE_ZONE: return "GO_TO_BLUE_ZONE";
+        case GO_TO_GREEN_ZONE: return "GO_TO_GREEN_ZONE";
+        case GET_ROCKETS: return "GET_ROCKETS";
+        case DEPOSIT_ROCKETS: return "DEPOSIT_ROCKETS";
+        case CROSS_GAP: return "CROSS_GAP";
+        case DISPLAY_LOGO: return "DISPLAY_LOGO";
+        case PUSH_BUTTON: return "PUSH_BUTTON";
+        case DONE: return "DONE";
+        case EMERGENCY_STOP: return "EMERGENCY_STOP";
+        default: return "UNKNOWN_STATE";
+    }
+}
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c

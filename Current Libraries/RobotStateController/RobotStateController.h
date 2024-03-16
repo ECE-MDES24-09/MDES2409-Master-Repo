@@ -9,6 +9,7 @@
 #include <Arduino_FreeRTOS.h>
 #include <event_groups.h>
 #include "robot_control.h"
+<<<<<<< HEAD
 #include <globalVariables.h>
 
 class RobotStateController;
@@ -18,6 +19,56 @@ typedef void (RobotStateController::* StateFunc)();
 
 // Function pointer type for event handling methods in RobotStateController
 typedef void (RobotStateController::* EventFunc)(Event);
+=======
+
+
+#define BIT_NEW_DATA_AVAILABLE (1 << 0)
+#define BIT_READ_DETECTIONS    (1 << 1)
+// Include other necessary headers...
+class RobotStateController;
+// Full Run
+//constexpr int NUM_STATES = 19;
+// Move Around Board Run
+constexpr int NUM_STATES = 9;
+const int lightSensorPin = A0;
+const int threshold = 160;
+
+
+// Enum for different event states
+enum Event {
+    START_EVENT,
+    STOP_EVENT,
+    TIMEOUT_EVENT,
+};
+
+
+// Enum for different robot states
+enum RobotState {
+    WAIT_FOR_START,
+    GET_BIG_BOXES,
+    GET_SMALL_BOXES,
+    DEPOSIT_BIG_BOXES,
+    DEPOSIT_SMALL_BOXES,
+    FOLLOW_LINE, // Has Counter
+    GO_TO_RED_ZONE,
+    GO_TO_BLUE_ZONE,
+    GO_TO_GREEN_ZONE,
+    GET_ROCKETS,
+    CROSS_GAP,
+    DEPOSIT_ROCKETS,
+    PUSH_BUTTON,
+    DISPLAY_LOGO,
+    DONE,
+    EMERGENCY_STOP
+  };
+
+
+// Function pointer type for state handling methods in RobotStateController
+typedef void (RobotStateController::*StateFunc)();
+
+// Function pointer type for event handling methods in RobotStateController
+typedef void (RobotStateController::*EventFunc)(Event);
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 
 // Structure representing a state of the robot
 struct State {
@@ -30,24 +81,40 @@ struct State {
     bool timeOut = false; // Flag to indicate if state has timed out
 
     // Constructor for State structure
+<<<<<<< HEAD
     State(RobotState state, int follow_line_counter, StateFunc func, State* prev, State* next);
+=======
+    State(RobotState state, int follow_line_counter, StateFunc func, State *prev, State *next);
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 
     // Destructor for State structure
     ~State();
 
     // Equality operator overloads for State comparison
+<<<<<<< HEAD
     friend bool operator==(const State& lhs, const State& rhs);
     friend bool operator!=(const State& lhs, const State& rhs);
+=======
+    friend bool operator==(const State &lhs, const State &rhs);
+    friend bool operator!=(const State &lhs, const State &rhs);
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 
     // Setters and getters for State properties
     void set_follow_line_counter(int follow_line_counter);
     RobotState getCurrentState() const;
     StateFunc getFunc() const;
     void setFunc(StateFunc newFunc);
+<<<<<<< HEAD
     State* getPrev() const;
     void setPrev(State* newPrev);
     State* getNext() const;
     void setNext(State* newNext);
+=======
+    State * getPrev() const;
+    void setPrev(State *newPrev);
+    State * getNext() const;
+    void setNext(State *newNext);
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 };
 
 
@@ -57,7 +124,10 @@ private:
     State* robotCurrentState{};
     State* robotPrevState{};
     State* robotNextState{};
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     /**
     // States for Full Run
     State states[NUM_STATES] = {
@@ -134,9 +204,24 @@ public:
     void proceed();
     void goBack();
     void reset();
+<<<<<<< HEAD
     void init();
     TaskHandle_t readDetTaskHandle{};
     TaskHandle_t processDetTaskHandle{};
     EventGroupHandle_t xDetectionsEventGroup{};
 };
+=======
+	void init();
+    TaskHandle_t readDetTaskHandle{};
+    TaskHandle_t processDetTaskHandle{};
+    EventGroupHandle_t xDetectionsEventGroup{};
+
+};
+
+
+
+
+
+
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 #endif //ROBOTSTATECONTROLLER_H
