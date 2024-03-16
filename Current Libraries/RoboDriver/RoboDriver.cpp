@@ -75,7 +75,7 @@ bool RoboDriver::stopTheMotors() {
 
 
 bool RoboDriver::startTheMotors() {
-  // Function to stop the motors
+  // Function to start the motors
   motorDriver.setSpeed(150, 150);
   for (int i = 0; i < 200; i++) {
     motorDriver.startMove();
