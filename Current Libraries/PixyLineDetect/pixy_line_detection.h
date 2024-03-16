@@ -1,7 +1,7 @@
 #ifndef PIXY_LINE_DETECTION_H
 #define PIXY_LINE_DETECTION_H
 
-#define CAM_ANG 45  // camera angel relative to the plane where the line at
+#define CAM_ANG 20  // camera angel relative to the plane where the line at
 #define VER_FOV 40  // vertical fov of camera
 
 #define HOR_PIXEL 78  // horizontal pixel
@@ -9,6 +9,7 @@
 
 #define CAM_HEIGHT 200  // height of camera from ground in milimeter
 
+#include <SPI.h>
 #include <Pixy2.h>
 #include "Arduino.h"
 
@@ -21,11 +22,11 @@ class PixyLineDetect {
 
 public:
 	void init();
-	
+
 	// refresh the line vector
 	// A low-pass filter may be applied in the future to reduce noise
 	void update();
-	
+
 	// return the angle between pixy camera and the line in degree
 	// positive: line tilts to the right of camera
 	// negative: line tilts to the left of camera
@@ -38,7 +39,7 @@ public:
 	double getOffset(double maxAng) const;
 
 private:
-	
+
 	// This function takes xy coordiate from the camera view to line plane coordiate. The camera is at the origin. The unit is milimeter
 	xy findHorXY(double x, double y) const;
 
@@ -49,7 +50,7 @@ private:
 	double x1 = 0;
 	double y1 = 0;
 
-};
 
+};
 
 #endif

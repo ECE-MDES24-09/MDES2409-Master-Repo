@@ -16,12 +16,9 @@ Detection& Detection::operator=(const Detection& other) {
     if (this != &other) { // Check for self-assignment
         // Copy data from 'other' Detection to this Detection
         strcpy(this->class_name, other.class_name);
-        this->confidence = other.confidence;
         this->timestamp = other.timestamp;
         this->depth_mm = other.depth_mm;
         this->x = other.x;
-        this->y = other.y;
-        this->z = other.z;
         this->horizontal_angle = other.horizontal_angle;
         strcpy(this->direction, other.direction);
     }

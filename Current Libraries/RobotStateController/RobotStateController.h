@@ -15,7 +15,10 @@
 #define BIT_READ_DETECTIONS    (1 << 1)
 // Include other necessary headers...
 class RobotStateController;
+// Full Run
 constexpr int NUM_STATES = 19;
+// Move Around Board Run
+// constexpr int NUM_STATES = 9;
 const int lightSensorPin = A0;
 const int threshold = 160;
 
@@ -93,6 +96,8 @@ private:
     State* robotCurrentState{};
     State* robotPrevState{};
     State* robotNextState{};
+    /**
+    // States for Full Run
     State states[NUM_STATES] = {
         {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
         {State(GET_BIG_BOXES, 0, &RobotStateController::get_big_boxes, &states[0], &states[2])}, // 1
@@ -113,6 +118,23 @@ private:
         {State(PUSH_BUTTON, 3, &RobotStateController::push_button, &states[15], &states[17])}, // 16
         {State(DONE, 3, &RobotStateController::done, &states[16], &states[0])}, // 17
         {State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr)}, // 18
+    };
+    **/
+
+    // Move around Board Run
+    State states[NUM_STATES] = {
+        {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
+        {State(FOLLOW_LINE, 0, &RobotStateController::follow_line, &states[0], &states[2])}, // 1
+        //{State(GO_TO_RED_ZONE, 1, &RobotStateController::go_to_red_zone, &states[3], &states[5])}, // 4
+        //{State(GO_TO_BLUE_ZONE, 1, &RobotStateController::go_to_blue_zone, &states[5], &states[7])}, // 6
+        {State(FOLLOW_LINE, 1, &RobotStateController::follow_line, &states[1], &states[3])}, // 2
+        //{State(GO_TO_GREEN_ZONE, 1, &RobotStateController::go_to_green_zone, &states[8], &states[10])}, // 9
+        {State(FOLLOW_LINE, 2, &RobotStateController::follow_line, &states[2], &states[4])}, // 3
+        {State(CROSS_GAP, 2, &RobotStateController::cross_gap, &states[3], &states[5])}, // 4
+        {State(FOLLOW_LINE, 3, &RobotStateController::follow_line, &states[4], &states[6])}, // 5
+        {State(PUSH_BUTTON, 3, &RobotStateController::push_button, &states[5], &states[7])}, // 6
+        {State(DONE, 3, &RobotStateController::done, &states[6], &states[0])}, // 7
+        {State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr)}, // 8
     };
 
     // State handling methods

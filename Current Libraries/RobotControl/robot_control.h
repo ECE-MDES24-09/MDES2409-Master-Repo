@@ -4,7 +4,7 @@
 #define MAX_ANGLE 70.0
 #define SPEED_MULTIPLIER 1.0
 #define ROLLER_MULTIPLIER 1.0
-#define STORAGE_SERVO_PIN 12
+
 
 #include "Arduino.h"
 #include <Servo.h>
@@ -12,14 +12,16 @@
 #include <pixy_line_detection.h>
 #include <serial_communication.h>
 
-#include <gyro_blue.h>
-#include <TMP.h>
+//#include <gyro_blue.h>
+//#include <TMP.h>
 #include "Manipulator_Control.h"
 
 
 // Counter and compare values
 const uint16_t t1_load = 0;
 const uint16_t t1_comp = 250;
+
+
 
 enum class RollerState
 {
@@ -43,8 +45,8 @@ class RobotControl {
 public:
 
 	MotorDriver motorDriver;
-	TMP TMPFront;
-	Gyro Gyro;
+	//TMP TMPFront;
+	//Gyro Gyro;
 
 	const int sensorPin = A12; 
 	
@@ -57,8 +59,8 @@ public:
 	void turn(float Turn);
 	void followHeading(float Direction);
 	void lineFollow(int robotSpeed, double targetOffset);
+	void crossGap();
 
-	void manualControl();
 
 	void connectionCheck();
 	void updateSerialInput();
@@ -67,6 +69,15 @@ public:
 	void rollersStop();
 	void rocketDrop();
 	void cruisin();
+
+
+	/**
+
+		Code for Manual Control.
+
+	**/
+	/**
+	void manualControl();
 	// InTake
 	void HandleSquareButtonPress();
 
@@ -79,7 +90,7 @@ public:
 
 
 	void printStates();
-
+	**/
 	void servo_write();
 
 private:
@@ -87,6 +98,8 @@ private:
 	PixyLineDetect lineDetect;
     Manipulator_Control manipulatorControl;
 	int8_t dataRecieved[DATA_LENGTH];
+
+	const int RC_STORAGE_SERVO_PIN = manipulatorControl.STORAGE_SERVO_PIN;
 
 	RollerState rollersState = RollerState::Stop;
 	StorageState storageState = StorageState::Start;

@@ -25,8 +25,6 @@ bool operator!=(const State &lhs, const State &rhs) {
     return !(lhs == rhs);
 }
 
-void State::set_follow_line_counter(int follow_line_counter) {
-}
 
 RobotState State::getCurrentState() const {
     return currState;
@@ -303,12 +301,12 @@ void RobotStateController::wait_for_start() {
     int lightSensorValue = analogRead(lightSensorPin);
     Serial.print("Light Sensor Value: ");
     Serial.println(lightSensorValue);
-    //while (lightSensorValue > threshold) {
-    //    lightSensorValue = analogRead(lightSensorPin);
-      //  Serial.print("Light Sensor Value: ");
-       // Serial.println(lightSensorValue);
-    //    vTaskDelay(50 / portTICK_PERIOD_MS);
-    //}
+    while (lightSensorValue > threshold) {
+        lightSensorValue = analogRead(lightSensorPin);
+        Serial.print("Light Sensor Value: ");
+        Serial.println(lightSensorValue);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
     proceed();
 }
 
@@ -345,7 +343,8 @@ void RobotStateController::follow_line() {
     vTaskSuspend( readDetTaskHandle );
     vTaskSuspend( processDetTaskHandle );
     Serial.println("In Task");
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    robotControl.lineFollow();
+    //vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
 }
 
@@ -442,7 +441,8 @@ void RobotStateController::deposit_rockets() {
 void RobotStateController::cross_gap() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.println("In Task");
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    robotControl.crossGap();
+    //vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
 }
 
@@ -478,7 +478,7 @@ void RobotStateController::done() {
     vTaskDelay(10000 / portTICK_PERIOD_MS);
     vTaskResume( readDetTaskHandle );
     vTaskResume( processDetTaskHandle );
-    proceed();
+    //proceed();
 }
 
 // emergency_stop - In case of fire, break glass. Or just call this.

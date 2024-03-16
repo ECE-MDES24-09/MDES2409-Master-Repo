@@ -1,64 +1,58 @@
-
 /*
+ Copyright (C) 2011 J. Coliz <maniacbug@ymail.com> 
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 2 as published by the Free Software Foundation.
+ */
+ /*  Galileo support from spaniakos <spaniakos@gmail.com> */
 
-	Using printf on the Arduino.
-	by Michael McElligott
-	
-	Usage:
-	Set a buffer size with _PRINTF_BUFFER_LENGTH_, default is 64 bytes, or about a single line
-	Set output stream with _Stream_Obj_. eg; SerialUSB
-	
-	printf(format string, argument(s) list).
-	printfn(): As above but appends a new line on each print; aka serial.println()
-	
-	eg; printf("%.2f, 0x%X", 1234.5678f, 32768);
-	
-	For a detailed list on printf specifiers:
-	http://www.cplusplus.com/reference/cstdio/printf/
-	and
-	http://man7.org/linux/man-pages/man3/printf.3.html
+/**
+ * @file printf.h
+ *
+ * Setup necessary to direct stdout to the Arduino Serial library, which
+ * enables 'printf'
+ */
 
+#ifndef __PRINTF_H__
+#define __PRINTF_H__
 
-		
-	Tested with the Arduino Due 1.6.6
-	Jan 2016	
+#if defined (ARDUINO) && !defined (__arm__) && !defined(__ARDUINO_X86__)
 
-*/
+int serial_putc( char c, FILE * )
+{
+  Serial.write( c );
 
+  return c;
+}
 
+void printf_begin(void)
+{
+  fdevopen( &serial_putc, 0 );
+}
 
+#elif defined (__arm__)
 
+void printf_begin(void){}
 
-#ifndef _printf_h_
-#define _printf_h_
+#elif defined(__ARDUINO_X86__)
+int serial_putc( char c, FILE * )
+{
+  Serial.write( c );
 
-#define _PRINTF_BUFFER_LENGTH_		64
-#define _Stream_Obj_				Serial
+  return c;
+}
 
-
-
-
-#if 1
-static char _pf_buffer_[_PRINTF_BUFFER_LENGTH_];
+void printf_begin(void)
+{
+  //For reddirect stdout to /dev/ttyGS0 (Serial Monitor port)
+  stdout = freopen("/dev/ttyGS0","w",stdout);
+  delay(500);
+  printf("redirecting to Serial...");
+  
+  // -----------------------------------------------------------
+}
 #else
-extern char _pf_buffer_[_PRINTF_BUFFER_LENGTH_];
-#endif
+#error This example is only for use on Arduino.
+#endif // ARDUINO
 
-
-#define printf(a,...)														\
-	do{																		\
-	snprintf(_pf_buffer_, sizeof(_pf_buffer_), a, ##__VA_ARGS__);			\
-	_Stream_Obj_.print(_pf_buffer_);										\
-	}while(0)
-
-#define printfn(a,...)														\
-	do{																		\
-	snprintf(_pf_buffer_, sizeof(_pf_buffer_), a"\r\n", ##__VA_ARGS__);		\
-	_Stream_Obj_.print(_pf_buffer_);										\
-	}while(0)
-
-
-
-#endif
-
-
+#endif // __PRINTF_H__

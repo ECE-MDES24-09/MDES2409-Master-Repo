@@ -1,9 +1,7 @@
-//
-// Created by jorda on 03/15/2024.
-//
 #include "pixy_line_detection.h"
 
-void PixyLineDetect::init() {
+
+ void PixyLineDetect::init() {
 	pixy.init();
 	Serial.println(pixy.changeProg("line"));
 }
@@ -97,4 +95,3 @@ xy PixyLineDetect::findHorXY(double x, double y) const {
 	return xyout;
 
 }
-

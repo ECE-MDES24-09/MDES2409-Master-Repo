@@ -11,10 +11,12 @@ public:
     void setLeftRollerSpeed(int speed); // Function to set left roller speed
     void setRightRollerSpeed(int speed); // Function to set right roller speed
 
-private:
     const int STORAGE_SERVO_PIN = 12;
     const int LEFT_ROLLER_SERVO_PIN = 10; // Example pin for left roller servo
     const int RIGHT_ROLLER_SERVO_PIN = 11; // Example pin for right roller servo
+
+private:
+
     Servo storageServo;
     Servo leftRollerServo;
     Servo rightRollerServo;

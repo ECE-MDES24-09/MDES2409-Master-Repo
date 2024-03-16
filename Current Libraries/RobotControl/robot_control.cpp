@@ -4,24 +4,37 @@
 #include "robot_control.h"
 
 void RobotControl::init() {
-    Gyro.init();
-    TMPFront.init(SerialSelect::S0);
+    //Gyro.init();
+    //TMPFront.init(SerialSelect::S0);
     lineDetect.init();
     manipulatorControl.init();
-    myservo.attach(STORAGE_SERVO_PIN);
+    myservo.attach(RC_STORAGE_SERVO_PIN);
 }
+
+
+/**
+
+    Sensor Control
+
+**/
 
 int RobotControl::ColorSensor() {
     return analogRead(sensorPin);
 }
 
 int RobotControl::GetDist() {
-    return TMPFront.getDist();
+    //return TMPFront.getDist();
 }
 
 int RobotControl::GetAngle() {
     return lineDetect.getAng(MAX_ANGLE);
 }
+
+/**
+
+    Test Function
+
+**/
 
 void RobotControl::test() {
     //moves roller motors
@@ -31,7 +44,7 @@ void RobotControl::test() {
     Serial.println(ColorSensor());
 
     //lidar
-    Serial.print(TMPFront.getDist());
+    //Serial.print(TMPFront.getDist());
 
     //moves block picking up thing
     myservo.write(100); //88 high 130 low
@@ -40,7 +53,7 @@ void RobotControl::test() {
     lineFollow(130, 0);
 
     //test gyro code
-    Serial.println(Gyro.getYaw());
+    //Serial.println(Gyro.getYaw());
 
     //tests drive train
     motorDriver.setSpeed(-150,150);
@@ -53,6 +66,12 @@ void RobotControl::test() {
     }
 }
 
+/**
+
+    Drive Control
+
+**/
+
 void RobotControl::turn(float Turn) {
     float Angle = 0;
     float FinalAngle = 0;
@@ -61,7 +80,7 @@ void RobotControl::turn(float Turn) {
     while(Angle > Turn+3 || Angle < Turn-3){
 
         //Angle = getGyroAng(); // gyro_red
-        Angle = getYaw(); // gyro_blue
+        //Angle = Gyro.getYaw(); // gyro_blue
         TurnSpeed = 2*(Turn - Angle);
         if(TurnSpeed > 200) TurnSpeed = 200;
         if(TurnSpeed < -200) TurnSpeed = -200;
@@ -87,13 +106,13 @@ void RobotControl::turn(float Turn) {
 
 void RobotControl::followHeading(float Direction) {
     //float Angle = getGyroAng(); // gyro_red
-    float Angle = getYaw(); // gyro_blue
-    if(Angle > Direction){
+    //float Angle = Gyro.getYaw(); // gyro_blue
+    //if(Angle > Direction){
 
-    }
-    if(Angle < Direction){
+    //}
+    //if(Angle < Direction){
 
-    }
+    //}
 }
 
 void RobotControl::lineFollow(int robotSpeed, double targetOffset) {
@@ -140,7 +159,16 @@ void RobotControl::lineFollow(int robotSpeed, double targetOffset) {
 
     motorDriver.setSpeed(leftSpeed, rightSpeed);
 }
+// TODO: Implement crossGap
+void RobotControl::crossGap() {
 
+}
+
+/**
+
+    Manipulator Control
+
+**/
 void RobotControl::rollersIntake() {
     manipulatorControl.setStorageAngle(pickUpAng, 0.3);
     manipulatorControl.setLeftRollerSpeed(50);
@@ -180,7 +208,7 @@ void RobotControl::servo_write() {
     Code for Manual Control.
 
 **/
-
+/**
 void RobotControl::manualControl() {
     // Wheels control
     int leftSpeed = dataRecieved[0] * 2 + 1;
@@ -349,4 +377,4 @@ void RobotControl::printStates() {
         // Print the entire message on a single line
         Serial.println(message);
 }
-
+**/
