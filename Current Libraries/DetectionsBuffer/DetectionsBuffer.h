@@ -5,7 +5,7 @@
 // DetectionBuffer.h - Header file for managing detections and their storage
 
 #include <string.h>
-#include <globalVariables.h>
+
 #ifndef DETECTION_BUFFER_H
 #define DETECTION_BUFFER_H
 
@@ -21,24 +21,18 @@ struct Detection {
 
     // Constructor to initialize the Detection structure
     Detection(const char* _class_name = "",
-              float _confidence = 0.0f,
               float _timestamp = 0.0f,
               float _depth_mm = 0.0f,
               float _x = 0.0f,
-              float _y = 0.0f,
-              float _z = 0.0f,
               float _horizontal_angle = 0.0f,
               const char* _direction = ""
               )
     {
         strncpy(class_name, _class_name, sizeof(class_name) - 1);
         class_name[sizeof(class_name) - 1] = '\0'; // Ensure null-termination
-        confidence = _confidence;
         timestamp = _timestamp;
         depth_mm = _depth_mm;
         x = _x;
-        y = _y;
-        z = _z;
         horizontal_angle = _horizontal_angle;
         strncpy(direction, _direction, sizeof(direction) - 1);
         direction[sizeof(direction) - 1] = '\0'; // Ensure null-termination
@@ -50,7 +44,7 @@ struct Detection {
 
 
 
-//const int BUFFER_SIZE = 15; // Size of the buffer to store detections
+const int BUFFER_SIZE = 15; // Size of the buffer to store detections
 
 // Function declarations - Detection Buffer
 void addDetectionToBuffer(const Detection& detection); // Adds a detection to the buffer
@@ -66,7 +60,7 @@ void clearBuffer(); // Clears the detection buffer
 
 
 // Global variables - Buffer
-//extern Detection buffer[BUFFER_SIZE]; // Buffer to store detections
-//extern int bufferIndex; // Current index in the buffer
+extern Detection buffer[BUFFER_SIZE]; // Buffer to store detections
+extern int bufferIndex; // Current index in the buffer
 
 #endif
