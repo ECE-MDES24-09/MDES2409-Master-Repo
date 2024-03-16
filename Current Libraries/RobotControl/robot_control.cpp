@@ -193,7 +193,11 @@ void RobotControl::rocketDrop() {
 }
 
 void RobotControl::cruisin() {
+<<<<<<< HEAD
+    manipulatorControl.setStorageAngle(crusingAng, 0.3);
+=======
     manipulatorControl.setStorageAngle(crusinAng, 0.3);
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     rollersStop();
 
 }

@@ -3,8 +3,11 @@
 //
 #include "serial_communication.h"
 
+<<<<<<< HEAD
+=======
 unsigned long lastTimeRecevieData = 0;
 
+>>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 byte* getSerialData() {
         static byte data[DATA_LENGTH] = { 0, 0, 0 }; // Data buffer initialized to zeros
     static char buffer[128]; // Buffer to store incoming characters plus "START"
