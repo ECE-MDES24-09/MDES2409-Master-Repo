@@ -27,9 +27,9 @@ typedef void (RobotStateController::* EventFunc)(Event);
 // Include other necessary headers...
 class RobotStateController;
 // Full Run
-//constexpr int NUM_STATES = 19;
+constexpr int NUM_STATES = 19;
 // Move Around Board Run
-constexpr int NUM_STATES = 9;
+// constexpr int NUM_STATES = 9;
 const int lightSensorPin = A0;
 const int threshold = 160;
 
