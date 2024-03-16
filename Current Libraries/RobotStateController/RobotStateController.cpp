@@ -560,7 +560,7 @@ void RobotStateController::follow_line() {
     vTaskSuspend( processDetTaskHandle );
 >>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     Serial.println("In Task");
-    robotControl.lineFollow();
+    robotControl.lineFollow(200, 70);
     //vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
 }
