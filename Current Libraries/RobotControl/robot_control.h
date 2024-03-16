@@ -1,32 +1,18 @@
 #ifndef ROBOT_CONTROL_H
 #define ROBOT_CONTROL_H
 
-<<<<<<< HEAD
-=======
 #define MAX_ANGLE 70.0
 #define SPEED_MULTIPLIER 1.0
 #define ROLLER_MULTIPLIER 1.0
 
 
->>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 #include "Arduino.h"
 #include <Servo.h>
 #include <MotorDriver.h>
 #include <pixy_line_detection.h>
 #include <serial_communication.h>
-<<<<<<< HEAD
-//#include <gyro_blue.h>
-//#include <TMP.h>
-#include "Manipulator_Control.h"
-#include <globalVariables.h>
-
-class RobotControl {
-public:
-	MotorDriver motorDriver;
-	//TMP TMPFront;
-	//Gyro Gyro;
-=======
-
+#include <Wire.h>
+#include <MPU6050_light.h>
 //#include <gyro_blue.h>
 //#include <TMP.h>
 #include "Manipulator_Control.h"
@@ -64,7 +50,6 @@ public:
 	//Gyro Gyro;
 
 	const int sensorPin = A12; 
->>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 	
 	void init();
 	
@@ -86,10 +71,7 @@ public:
 	void rocketDrop();
 	void cruisin();
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 	/**
 
 		Code for Manual Control.
@@ -113,14 +95,6 @@ public:
 	void servo_write();
 
 private:
-<<<<<<< HEAD
-	PixyLineDetect lineDetect;
-    Manipulator_Control manipulatorControl;
-
-	const int RC_STORAGE_SERVO_PIN = STORAGE_SERVO_PIN;
-
-	Servo myservo;
-=======
 
 	PixyLineDetect lineDetect;
     Manipulator_Control manipulatorControl;
@@ -148,7 +122,6 @@ private:
 
 	int storageCycleStep = 0;
 
->>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
 };
 
 

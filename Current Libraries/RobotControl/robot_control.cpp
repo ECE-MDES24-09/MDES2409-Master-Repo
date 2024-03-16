@@ -6,6 +6,7 @@
 void RobotControl::init() {
     //Gyro.init();
     //TMPFront.init(SerialSelect::S0);
+	MPU6050 mpu(Wire);
     lineDetect.init();
     manipulatorControl.init();
     myservo.attach(RC_STORAGE_SERVO_PIN);
@@ -193,11 +194,7 @@ void RobotControl::rocketDrop() {
 }
 
 void RobotControl::cruisin() {
-<<<<<<< HEAD
-    manipulatorControl.setStorageAngle(crusingAng, 0.3);
-=======
     manipulatorControl.setStorageAngle(crusinAng, 0.3);
->>>>>>> 1b510070ff16c63498ab9274048c425d8414488c
     rollersStop();
 
 }
