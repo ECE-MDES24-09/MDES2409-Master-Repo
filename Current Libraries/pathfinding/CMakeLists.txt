@@ -26,8 +26,7 @@ add_executable(RobotStateController main.cpp RobotStateController.cpp
         Current Libraries/RobotContorl.cpp
         Current Libraries/RobotStateController.cpp
         Current Libraries/Serial_Communications.cpp
-        Current Libraries/TimeManagement.cpp
-        Current Libraries/gyro_blue.cpp)
+        Current Libraries/TimeManagement.cpp)
 
 # Define your test executable
 add_executable(RobotStateControllerTest unit_tests.cpp RobotStateController.cpp)
