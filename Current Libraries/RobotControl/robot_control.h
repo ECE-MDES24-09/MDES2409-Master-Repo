@@ -48,7 +48,7 @@ public:
 	//TMP TMPFront;
 	//Gyro Gyro;
 
-	const int sensorPin = A12; 
+	const int sensorPin = A12;
 	
 	void init();
 	

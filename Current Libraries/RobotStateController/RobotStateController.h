@@ -9,7 +9,7 @@
 #include <Arduino_FreeRTOS.h>
 #include <event_groups.h>
 #include "robot_control.h"
-
+#include "TimeManagement.h"
 
 #define BIT_NEW_DATA_AVAILABLE (1 << 0)
 #define BIT_READ_DETECTIONS    (1 << 1)
@@ -19,7 +19,7 @@ class RobotStateController;
 //constexpr int NUM_STATES = 19;
 // Move Around Board Run
 constexpr int NUM_STATES = 9;
-const int lightSensorPin = A0;
+const int lightSensorPin = A12;
 const int threshold = 160;
 
 
@@ -93,9 +93,11 @@ struct State {
 class RobotStateController {
 private:
     RobotControl robotControl{};
+    TimeManagement timemanager;
     State* robotCurrentState{};
     State* robotPrevState{};
     State* robotNextState{};
+    Event eventState;
     /**
     // States for Full Run
     State states[NUM_STATES] = {
@@ -123,7 +125,7 @@ private:
 
     // Move around Board Run
     State states[NUM_STATES] = {
-        {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
+        {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, &states[7], &states[1])}, // 0
         {State(FOLLOW_LINE, 0, &RobotStateController::follow_line, &states[0], &states[2])}, // 1
         //{State(GO_TO_RED_ZONE, 1, &RobotStateController::go_to_red_zone, &states[3], &states[5])}, // 4
         //{State(GO_TO_BLUE_ZONE, 1, &RobotStateController::go_to_blue_zone, &states[5], &states[7])}, // 6
@@ -155,10 +157,14 @@ private:
     void done();
     void emergency_stop();
     static const char* getStateName(RobotState state);
+    void startState(RobotState currentState);
+    void stopState(RobotState currentState, bool stateComplete);
+    void timeOut(RobotState currentState);
 
 public:
     RobotStateController();
     ~RobotStateController();
+    void eventUpdate();
     void update();
     RobotState getCurrentRobotState();
     void setState(State* newState);

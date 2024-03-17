@@ -79,6 +79,20 @@ RobotStateController::RobotStateController() {
 
 RobotStateController::~RobotStateController() = default;
 
+void RobotStateController::eventUpdate() {
+
+}
+
+void RobotStateController::startState(RobotState currentState) {
+
+}
+void RobotStateController::stopState(RobotState currentState, bool stateComplete) {
+
+}
+void RobotStateController::timeOut(RobotState currentState) {
+
+}
+
 void RobotStateController::update() {
     RobotState currentState = getCurrentRobotState();
     if (currentState == FOLLOW_LINE) {
@@ -93,6 +107,7 @@ void RobotStateController::update() {
         Serial2.println(getStateName(robotCurrentState->getCurrentState()));
         Serial.println(getStateName(robotCurrentState->getCurrentState()));
     }
+    eventState = START_EVENT;
     switch (currentState) {
         case WAIT_FOR_START:
             // Code to handle waiting for start
@@ -189,6 +204,7 @@ void RobotStateController::reset() {
     setState(&states[0]);
 }
 void RobotStateController::init() {
+
     robotControl.init();
 }
 
@@ -301,12 +317,13 @@ void RobotStateController::wait_for_start() {
     int lightSensorValue = analogRead(lightSensorPin);
     Serial.print("Light Sensor Value: ");
     Serial.println(lightSensorValue);
-    while (lightSensorValue > threshold) {
-        lightSensorValue = analogRead(lightSensorPin);
-        Serial.print("Light Sensor Value: ");
-        Serial.println(lightSensorValue);
-        vTaskDelay(50 / portTICK_PERIOD_MS);
-    }
+    //while (lightSensorValue > threshold) {
+    //    lightSensorValue = analogRead(lightSensorPin);
+    //    Serial.print("Light Sensor Value: ");
+    //    Serial.println(lightSensorValue);
+    //    vTaskDelay(50 / portTICK_PERIOD_MS);
+    //}
+    vTaskDelay(2500 / portTICK_PERIOD_MS);
     proceed();
 }
 
@@ -343,8 +360,8 @@ void RobotStateController::follow_line() {
     vTaskSuspend( readDetTaskHandle );
     vTaskSuspend( processDetTaskHandle );
     Serial.println("In Task");
-    robotControl.lineFollow(200, 70);
-    //vTaskDelay(2000 / portTICK_PERIOD_MS);
+    //robotControl.lineFollow(200, 70);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
 }
 

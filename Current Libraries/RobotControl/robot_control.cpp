@@ -6,9 +6,11 @@
 void RobotControl::init() {
     //Gyro.init();
     //TMPFront.init(SerialSelect::S0);
+    motorDriver.init();
     lineDetect.init();
     manipulatorControl.init();
     myservo.attach(RC_STORAGE_SERVO_PIN);
+    pinMode(sensorPin, INPUT);
 }
 
 
