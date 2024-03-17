@@ -142,7 +142,7 @@ void setup() {
   
   
   Serial.println("Setup 2");
-
+  vTaskStartScheduler();
 
   // For those who like to live dangerously: Uncomment these lines at your own risk.
   // I mean, what could possibly go wrong?

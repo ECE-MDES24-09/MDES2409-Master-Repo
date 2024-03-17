@@ -69,7 +69,7 @@ public:
 	void followHeading(float Direction);
 	void lineFollow(int robotSpeed, double targetOffset);
 	void crossGap();
-
+	void turnTo();
 
 	void connectionCheck();
 	void updateSerialInput();

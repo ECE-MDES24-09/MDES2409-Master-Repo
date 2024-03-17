@@ -9,7 +9,7 @@
 #include <Arduino_FreeRTOS.h>
 #include <event_groups.h>
 #include "robot_control.h"
-
+#include <DetectionsBuffer.h>
 
 #define BIT_NEW_DATA_AVAILABLE (1 << 0)
 #define BIT_READ_DETECTIONS    (1 << 1)
@@ -129,7 +129,7 @@ private:
 
     // Move around Board Run - Phase 1
     State states[NUM_STATES] = {
-        {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[0])}, // 0
+        {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
         {State(FOLLOW_LINE, 0, &RobotStateController::follow_line, &states[0], &states[2])}, // 1
         //{State(GO_TO_RED_ZONE, 1, &RobotStateController::go_to_red_zone, &states[3], &states[5])}, // 4
         //{State(GO_TO_BLUE_ZONE, 1, &RobotStateController::go_to_blue_zone, &states[5], &states[7])}, // 6
@@ -205,6 +205,9 @@ public:
     void goBack();
     void reset();
 	void init();
+	void turnRight();
+	void turnLeft();
+	void turnTo(Detection detection);
     TaskHandle_t readDetTaskHandle{};
     TaskHandle_t processDetTaskHandle{};
     EventGroupHandle_t xDetectionsEventGroup{};

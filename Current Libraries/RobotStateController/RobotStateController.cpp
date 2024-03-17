@@ -302,6 +302,35 @@ int RobotStateController::getLineFollowCounter() {
     return robotCurrentState->followLineCounter;
 }
 
+void RobotStateController::turnRight(){
+    TickType_t startTick = xTaskGetTickCount();
+	TickType_t delayTicks = pdMS_TO_TICKS(250);
+	robotControl.motorDriver.setSpeed(150,-150);
+	while ((xTaskGetTickCount() - startTick) < delayTicks) {
+        robotControl.motorDriver.startMove();
+		vTaskDelay(1 / portTICK_PERIOD_MS);
+    }
+	
+}
+
+void RobotStateController::turnLeft(){
+    TickType_t startTick = xTaskGetTickCount();
+	TickType_t delayTicks = pdMS_TO_TICKS(250);
+	robotControl.motorDriver.setSpeed(-150,150);
+	while ((xTaskGetTickCount() - startTick) < delayTicks) {
+		robotControl.motorDriver.startMove();
+		vTaskDelay(1 / portTICK_PERIOD_MS);    
+		}
+}
+
+void RobotStateController::turnTo(Detection detection) {
+	while (detection.horizontal_angle <= -0.5) {
+		
+	}
+}
+
+
+
 /**
  * These are the State Functions.
  **/
@@ -576,7 +605,7 @@ void RobotStateController::cross_gap() {
     proceed();
 }
 
-// display_logo - Time for a commercial break
+// display_logo - Time for a comme	ial break
 // State Number 5
 // Current Max Time 2 seconds
 void RobotStateController::display_logo() {
