@@ -15,7 +15,7 @@ struct Detection {
     float confidence; // Confidence score of the detection
     float timestamp; // Timestamp when the detection occurred
     float depth_mm; // Depth of the detected object in millimeters
-    float x, y, z; // 3D coordinates of the detected object
+    float x; // 3D coordinates of the detected object
     float horizontal_angle; // Horizontal angle of the detected object relative to the sensor
     char direction[6]; // Direction of the detected object (e.g., "left", "right")
 

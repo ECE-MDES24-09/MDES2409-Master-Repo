@@ -32,8 +32,13 @@
     // Move Around Board Run
     // inline constexpr int NUM_STATES = 9;
     #define NUM_STATES 9
+<<<<<<< HEAD
     inline const int lightSensorPin = A12;
     inline const int threshold = 260;
+=======
+    inline const int lightSensorPin = A0;
+    inline const int threshold = 160;
+>>>>>>> 7c04040004ee4aac350c34e4e1a5f7da160fb546
 
 
     // Enum for different event states

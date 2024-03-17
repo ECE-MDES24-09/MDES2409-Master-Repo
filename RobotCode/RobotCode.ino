@@ -101,8 +101,9 @@ void DebugBox(void *pvParameters);
 
 void setup() {
   // Let's set up our circus of tasks and hope they play nice together
-  Serial.begin(9600);
-  Serial2.begin(9600);
+  Serial.begin(115200);
+  Serial2.begin(115200);
+  stateMachine.init();
   clearBuffer();
   String dir_json = "{\"0\": \"left\", \"1\": \"right\"}";
   String class_json = "{\"0\": \"BigBox\", \"1\": \"BlueZone\", \"2\": \"Button\", \"3\": \"GreenZone\", \"4\": \"Nozzle\", \"5\": \"RedZone\", \"6\": \"Rocket\", \"7\": \"SmallBox\", \"8\": \"StartZone\", \"9\": \"WhiteLine\", \"10\": \"YellowLine\"}";
@@ -141,7 +142,7 @@ void setup() {
    ads
   
   Serial.println("Setup 2");
-
+  vTaskStartScheduler();
 
   // For those who like to live dangerously: Uncomment these lines at your own risk.
   // I mean, what could possibly go wrong?

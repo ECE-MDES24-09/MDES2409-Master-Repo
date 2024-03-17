@@ -4,14 +4,19 @@
 #define MAX_ANGLE 70.0
 #define SPEED_MULTIPLIER 1.0
 #define ROLLER_MULTIPLIER 1.0
-
+#define MAX_ANGLE 70.0
+#define SPEED_MULTIPLIER 1.0
+#define ROLLER_MULTIPLIER 1.0
+#define TRIG_PIN 26
+#define ECHO_PIN 27
 
 #include "Arduino.h"
 #include <Servo.h>
 #include <MotorDriver.h>
 #include <pixy_line_detection.h>
 #include <serial_communication.h>
-
+#include <Wire.h>
+#include <MPU6050_light.h>
 //#include <gyro_blue.h>
 //#include <TMP.h>
 #include "Manipulator_Control.h"
@@ -46,7 +51,11 @@ public:
 
 	MotorDriver motorDriver;
 	//TMP TMPFront;
-	//Gyro Gyro;
+	//New_Gyro Gyro;
+	
+	float gyro_X;
+	float gyro_Y;
+	float gyro_Z;
 
 	const int sensorPin = A12;
 	
@@ -54,14 +63,19 @@ public:
 	
 	int ColorSensor();
 	int GetDist();
-	int GetAngle();
+	int GetPixyAngle();
 	void test();
 	void turn(float Turn);
 	void followHeading(float Direction);
 	void lineFollow(int robotSpeed, double targetOffset);
 	void crossGap();
+<<<<<<< HEAD
 
 	double USDistance();
+=======
+	void turnTo();
+
+>>>>>>> 7c04040004ee4aac350c34e4e1a5f7da160fb546
 	void connectionCheck();
 	void updateSerialInput();
 	void rollersIntake();
@@ -70,6 +84,7 @@ public:
 	void rocketDrop();
 	void cruisin();
 
+	double USDistance();
 
 	/**
 
@@ -91,6 +106,7 @@ public:
 
 	void printStates();
 	**/
+	Servo myservo;
 	void servo_write();
 
 private:
@@ -117,7 +133,7 @@ private:
 	int8_t lastDataReceived3 = -1; // To track the last state of dataRecieved[3]
 	int8_t lastDataReceived4 = -1; // To track the last state of dataRecieved[4]
 	
-	Servo myservo;
+	
 
 	int storageCycleStep = 0;
 
