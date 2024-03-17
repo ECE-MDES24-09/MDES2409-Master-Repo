@@ -206,7 +206,6 @@ void RobotStateController::reset() {
 void RobotStateController::init() {
 
     robotControl.init();
-	robotControl.cruisin();
 }
 
 State *RobotStateController::getPrevState() {
@@ -300,27 +299,12 @@ void RobotStateController::setEmergencyState() {
     robotCurrentState->next = tmpNext;
 }
 
-void RobotStateController::setGyroData(float gyro_X, float gyro_Y, float gyro_Z) {
-	robotControl.gyro_X = gyro_X;
-	robotControl.gyro_Y = gyro_Y;
-	robotControl.gyro_Z = gyro_Z;
-}
-
-GyroData RobotStateController::getGyroData() {
-    GyroData data;
-    data.x = robotControl.gyro_X;
-    data.y = robotControl.gyro_Y;
-    data.z = robotControl.gyro_Z;
-    return data;
-}
-
 int RobotStateController::getLineFollowCounter() {
     return robotCurrentState->followLineCounter;
 }
 
 void RobotStateController::turnRight(){
     TickType_t startTick = xTaskGetTickCount();
-<<<<<<< HEAD
     TickType_t delayTicks = pdMS_TO_TICKS(250);
     robotControl.motorDriver.setSpeed(150,-150);
     while ((xTaskGetTickCount() - startTick) < delayTicks) {
@@ -328,20 +312,10 @@ void RobotStateController::turnRight(){
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 
-=======
-	TickType_t delayTicks = pdMS_TO_TICKS(250);
-	robotControl.motorDriver.setSpeed(150,-150);
-	while ((xTaskGetTickCount() - startTick) < delayTicks) {
-        robotControl.motorDriver.startMove();
-		vTaskDelay(1 / portTICK_PERIOD_MS);
-    }
-	
->>>>>>> 7c04040004ee4aac350c34e4e1a5f7da160fb546
 }
 
 void RobotStateController::turnLeft(){
     TickType_t startTick = xTaskGetTickCount();
-<<<<<<< HEAD
     TickType_t delayTicks = pdMS_TO_TICKS(250);
     robotControl.motorDriver.setSpeed(-150,150);
     while ((xTaskGetTickCount() - startTick) < delayTicks) {
@@ -357,24 +331,6 @@ void RobotStateController::turnTo(Detection detection) {
 }
 
 
-=======
-	TickType_t delayTicks = pdMS_TO_TICKS(250);
-	robotControl.motorDriver.setSpeed(-150,150);
-	while ((xTaskGetTickCount() - startTick) < delayTicks) {
-		robotControl.motorDriver.startMove();
-		vTaskDelay(1 / portTICK_PERIOD_MS);    
-		}
-}
-
-void RobotStateController::turnTo(Detection detection) {
-	while (detection.horizontal_angle <= -0.5) {
-		
-	}
-}
-
-
-
->>>>>>> 7c04040004ee4aac350c34e4e1a5f7da160fb546
 /**
  * These are the State Functions.
  **/
@@ -385,13 +341,10 @@ void RobotStateController::wait_for_start() {
     xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
     vTaskResume(readDetTaskHandle);
     vTaskResume(processDetTaskHandle);
-	Serial.println("In Task");
     vTaskDelay(10 / portTICK_PERIOD_MS);
-	robotControl.cruisin();
     int lightSensorValue = analogRead(lightSensorPin);
     Serial.print("Light Sensor Value: ");
     Serial.println(lightSensorValue);
-<<<<<<< HEAD
     //while (lightSensorValue > threshold) {
     //    lightSensorValue = analogRead(lightSensorPin);
     //    Serial.print("Light Sensor Value: ");
@@ -399,24 +352,6 @@ void RobotStateController::wait_for_start() {
     //    vTaskDelay(50 / portTICK_PERIOD_MS);
     //}
     vTaskDelay(2500 / portTICK_PERIOD_MS);
-=======
-    while (lightSensorValue > threshold || robotControl.ColorSensor()>200) {
-        lightSensorValue = analogRead(lightSensorPin);
-        Serial.print("Light Sensor Value: ");
-        Serial.println(lightSensorValue);
-        vTaskDelay(50 / portTICK_PERIOD_MS);
-    }
-	robotControl.motorDriver.setSpeed(-150,150);
-	for(int i = 0; i<1400; i++){
-		robotControl.motorDriver.startMove();
-		vTaskDelay(1 / portTICK_PERIOD_MS);		
-	}
-	robotControl.motorDriver.setSpeed(0,0);
-	for(int i = 0; i<500; i++){
-		robotControl.motorDriver.startMove();
-		vTaskDelay(1 / portTICK_PERIOD_MS);	
-	}
->>>>>>> 7c04040004ee4aac350c34e4e1a5f7da160fb546
     proceed();
 }
 
@@ -449,120 +384,12 @@ void RobotStateController::get_small_boxes() {
 // State Numbers 3, 8, 11, 13
 // Current Max Times 7, 5, 5, and 5 seconds respectively
 void RobotStateController::follow_line() {
-	int followLineCounter = robotCurrentState->followLineCounter;
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskSuspend( readDetTaskHandle );
     vTaskSuspend( processDetTaskHandle );
     Serial.println("In Task");
-<<<<<<< HEAD
     //robotControl.lineFollow(200, 70);
     vTaskDelay(2000 / portTICK_PERIOD_MS);
-=======
-	if (followLineCounter < 2) {
-		while(abs(robotControl.GetPixyAngle())<40){
-			robotControl.lineFollow(200, 0);
-		}
-		robotControl.motorDriver.setSpeed(200,200);
-		for(int i = 0; i<1000; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(0, 0);
-		for(int i = 255;i>0;i--){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);		
-		}
-		robotControl.motorDriver.setSpeed(-150,150);
-		for(int i = 0; i<1400; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(0,0);
-		for(int i = 0; i<500; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-	}
-	if (followLineCounter == 2) {
-		while(abs(robotControl.GetPixyAngle())<40){
-		  robotControl.lineFollow(150, 0);
-		}
-		robotControl.motorDriver.setSpeed(0, 0);
-		for(int i = 0;i<256;i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(150,150);
-		for(int i = 0; i<1000; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(50,50);
-		for(int i = 0; i<7500; i++){
-			robotControl.motorDriver.startMove();
-			robotControl.myservo.write(93);
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(-50,-50);
-		for(int i = 0; i<700; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(0,0);
-		for(int i = 0; i<500; i++){
-			robotControl.motorDriver.startMove();
-			robotControl.myservo.write(120);
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-
-		robotControl.motorDriver.setSpeed(255,255);
-		for(int i = 0; i<1000; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-
-		robotControl.motorDriver.setSpeed(0,0);
-		for(int i = 0; i<1000; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-
-		robotControl.motorDriver.setSpeed(100,100);
-		while(robotControl.USDistance()>17){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-
-		robotControl.motorDriver.setSpeed(0,0);
-		for(int i = 0; i<1000; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-
-		robotControl.motorDriver.setSpeed(-150,150);
-		for(int i = 0; i<1400; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(0,0);
-		for(int i = 0; i<1000; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-
-		robotControl.motorDriver.setSpeed(-100,-100);
-		while(robotControl.USDistance()<36){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-		robotControl.motorDriver.setSpeed(0,0);
-		for(int i = 0; i<1000; i++){
-			robotControl.motorDriver.startMove();
-			vTaskDelay(1 / portTICK_PERIOD_MS);
-		}
-	}
-    //vTaskDelay(2000 / portTICK_PERIOD_MS);
->>>>>>> 7c04040004ee4aac350c34e4e1a5f7da160fb546
     proceed();
 }
 
@@ -664,7 +491,7 @@ void RobotStateController::cross_gap() {
     proceed();
 }
 
-// display_logo - Time for a comme	ial break
+// display_logo - Time for a commercial break
 // State Number 5
 // Current Max Time 2 seconds
 void RobotStateController::display_logo() {

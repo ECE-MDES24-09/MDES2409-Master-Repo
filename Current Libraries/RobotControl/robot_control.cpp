@@ -6,11 +6,7 @@
 void RobotControl::init() {
     //Gyro.init();
     //TMPFront.init(SerialSelect::S0);
-<<<<<<< HEAD
     motorDriver.init();
-=======
-	//MPU6050 mpu(Wire);
->>>>>>> 7c04040004ee4aac350c34e4e1a5f7da160fb546
     lineDetect.init();
     manipulatorControl.init();
     myservo.attach(RC_STORAGE_SERVO_PIN);
@@ -32,21 +28,8 @@ int RobotControl::GetDist() {
     //return TMPFront.getDist();
 }
 
-int RobotControl::GetPixyAngle() {
+int RobotControl::GetAngle() {
     return lineDetect.getAng(MAX_ANGLE);
-}
-
-double RobotControl::USDistance(){
-	float distance_cm;
-	digitalWrite(TRIG_PIN, HIGH);
-	delayMicroseconds(10);
-	digitalWrite(TRIG_PIN, LOW);
-
-	// measure duration of pulse from ECHO pin
-	distance_cm = pulseIn(ECHO_PIN, HIGH)*.017;
-
-
-	return distance_cm;
 }
 
 /**

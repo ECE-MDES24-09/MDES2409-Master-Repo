@@ -96,21 +96,8 @@ Detection getLatestDetection() {
 }
 
 Detection getLeftmostDetection(){
-	// Check if the buffer is empty
-    if (bufferIndex == 0) {
-        return Detection{}; // Return an empty detection if the buffer is empty
-    }
+	
 
-    Detection leftmostDetection = buffer[0]; // Start with the first detection in the buffer
-
-    // Loop through the buffer to find the detection with the lowest x value
-    for (int i = 1; i < bufferIndex; ++i) {
-        if (buffer[i].x < leftmostDetection.x) {
-            leftmostDetection = buffer[i];
-        }
-    }
-
-    return leftmostDetection; // Return the leftmost detection
 }
 
 void clearBuffer() {
