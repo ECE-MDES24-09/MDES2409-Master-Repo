@@ -179,6 +179,9 @@ public:
     void goBack();
     void reset();
 	void init();
+    void turnRight();
+    void turnLeft();
+    void turnTo(Detection detection);
     TaskHandle_t readDetTaskHandle{};
     TaskHandle_t processDetTaskHandle{};
     EventGroupHandle_t xDetectionsEventGroup{};

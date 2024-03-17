@@ -61,7 +61,7 @@ public:
 	void lineFollow(int robotSpeed, double targetOffset);
 	void crossGap();
 
-
+	double USDistance();
 	void connectionCheck();
 	void updateSerialInput();
 	void rollersIntake();

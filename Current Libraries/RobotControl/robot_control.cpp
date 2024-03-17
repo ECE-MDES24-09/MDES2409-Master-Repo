@@ -106,6 +106,21 @@ void RobotControl::turn(float Turn) {
     }
 }
 
+double RobotControl::USDistance(){
+    float distance_cm;
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+
+    // measure duration of pulse from ECHO pin
+    distance_cm = pulseIn(ECHO_PIN, HIGH)*.017;
+
+
+    return distance_cm;
+}
+
+
+
 void RobotControl::followHeading(float Direction) {
     //float Angle = getGyroAng(); // gyro_red
     //float Angle = Gyro.getYaw(); // gyro_blue
