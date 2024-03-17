@@ -101,8 +101,8 @@ void DebugBox(void *pvParameters);
 
 void setup() {
   // Let's set up our circus of tasks and hope they play nice together
-  Serial.begin(9600);
-  Serial2.begin(9600);
+  Serial.begin(115200);
+  Serial2.begin(115200);
   stateMachine.init();
   clearBuffer();
   String dir_json = "{\"0\": \"left\", \"1\": \"right\"}";
