@@ -302,6 +302,10 @@ void RobotStateController::setEmergencyState() {
 int RobotStateController::getLineFollowCounter() {
     return robotCurrentState->followLineCounter;
 }
+//TODO: Turn to find line - May need to send a state back to jetson to filter for lines.
+// Use Serial2.println("FIND_LINE"); To filter for lines on jetson
+void RobotStateController::findLine(){}
+
 
 void RobotStateController::turnRight(){
     TickType_t startTick = xTaskGetTickCount();
@@ -323,20 +327,46 @@ void RobotStateController::turnLeft(){
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
-
+//TODO: Test turnTo - should turn to left or right based on value of horizontal angle.
+// if horizontal angle is positive turn right, if negative, turn left
 void RobotStateController::turnTo(Detection detection) {
-    while (detection.horizontal_angle <= -0.5) {
-
+    while (detection.horizontal_angle < -1) {
+        turnLeft();
+    }
+    while (detection.horizontal_angle > 1) {
+        turnRight();
     }
 }
 
+// Example function to move towards a specific detection
+void RobotStateController::moveToDetection(Detection detection) {
+    // Adjust the robot's orientation based on the horizontal angle of the detection
+    if (detection.horizontal_angle < 0) {
+        turnLeft(); // Function to turn the robot left
+    } else if (detection.horizontal_angle > 0) {
+        turnRight(); // Function to turn the robot right
+    }
+
+    // Move forward towards the detection based on depth_mm
+    float forwardSpeed = 150;
+    float distanceToMove = calculateDistanceToMove(detection.depth_mm); // Function to calculate the distance
+    robotControl.motorDriver.setSpeed(forwardSpeed, forwardSpeed); // Set speed for forward movement
+    // Function to move forward for a calculated distance
+    moveForward(distanceToMove);
+}
+
+//TODO: Implement moveForware - use USDistance? to go forward maybe 4-5 cm at a time?
+// Note DetectionsBuffer is in mm. USDistance is in cm.
+void RobotStateController::moveForward(float distanceToMove) {}
 
 /**
  * These are the State Functions.
  **/
+//TODO: Implement Time controls for states
 // wait_for_start - because patience is a virtue, or so I'm told
 // State Number 0
 // Current Max Time 0 seconds (Doesn't have time limit)
+//TODO: Implement Timeout or start button
 void RobotStateController::wait_for_start() {
     xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
     vTaskResume(readDetTaskHandle);
@@ -345,12 +375,13 @@ void RobotStateController::wait_for_start() {
     int lightSensorValue = analogRead(lightSensorPin);
     Serial.print("Light Sensor Value: ");
     Serial.println(lightSensorValue);
-    //while (lightSensorValue > threshold) {
-    //    lightSensorValue = analogRead(lightSensorPin);
-    //    Serial.print("Light Sensor Value: ");
-    //    Serial.println(lightSensorValue);
-    //    vTaskDelay(50 / portTICK_PERIOD_MS);
-    //}
+    //Comment this out to test movement through states
+    while (lightSensorValue > threshold) {
+       lightSensorValue = analogRead(lightSensorPin);
+        Serial.print("Light Sensor Value: ");
+        Serial.println(lightSensorValue);
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+    }
     vTaskDelay(2500 / portTICK_PERIOD_MS);
     proceed();
 }
@@ -358,6 +389,7 @@ void RobotStateController::wait_for_start() {
 // get_big_boxes - It's like shopping, but for robots
 // State Number 1
 // Current Max Time 10 seconds
+//TODO: Use turnTo and moveTo to Get Big Boxes
 void RobotStateController::get_big_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskResume( readDetTaskHandle );
@@ -371,6 +403,7 @@ void RobotStateController::get_big_boxes() {
 // get_small_boxes - Because size isn't everything
 // State Number 2
 // Current Max Time 10 seconds
+//TODO: Use turnTo and moveTo to Get Small Boxes
 void RobotStateController::get_small_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskResume( readDetTaskHandle );
@@ -383,19 +416,123 @@ void RobotStateController::get_small_boxes() {
 // Don't tell my kindergarten teacher I said that.
 // State Numbers 3, 8, 11, 13
 // Current Max Times 7, 5, 5, and 5 seconds respectively
+//TODO: Test and verify this
 void RobotStateController::follow_line() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
+    int followLineCounter = robotCurrentState->followLineCounter;
     vTaskSuspend( readDetTaskHandle );
     vTaskSuspend( processDetTaskHandle );
     Serial.println("In Task");
-    //robotControl.lineFollow(200, 70);
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    if (followLineCounter < 2) {
+		while(abs(robotControl.GetPixyAngle())<40){
+			robotControl.lineFollow(200, 0);
+		}
+		robotControl.motorDriver.setSpeed(200,200);
+		for(int i = 0; i<1000; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(0, 0);
+		for(int i = 255;i>0;i--){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(-150,150);
+		for(int i = 0; i<1400; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(0,0);
+		for(int i = 0; i<500; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+	}
+	if (followLineCounter == 2) {
+		while(abs(robotControl.GetPixyAngle())<40){
+		  robotControl.lineFollow(150, 0);
+		}
+		robotControl.motorDriver.setSpeed(0, 0);
+		for(int i = 0;i<256;i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(150,150);
+		for(int i = 0; i<1000; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(50,50);
+		for(int i = 0; i<7500; i++){
+			robotControl.motorDriver.startMove();
+			robotControl.myservo.write(93);
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(-50,-50);
+		for(int i = 0; i<700; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(0,0);
+		for(int i = 0; i<500; i++){
+			robotControl.motorDriver.startMove();
+			robotControl.myservo.write(120);
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+
+		robotControl.motorDriver.setSpeed(255,255);
+		for(int i = 0; i<1000; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+
+		robotControl.motorDriver.setSpeed(0,0);
+		for(int i = 0; i<1000; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+
+		robotControl.motorDriver.setSpeed(100,100);
+		while(robotControl.USDistance()>17){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+
+		robotControl.motorDriver.setSpeed(0,0);
+		for(int i = 0; i<1000; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+
+		robotControl.motorDriver.setSpeed(-150,150);
+		for(int i = 0; i<1400; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(0,0);
+		for(int i = 0; i<1000; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+
+		robotControl.motorDriver.setSpeed(-100,-100);
+		while(robotControl.USDistance()<36){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+		robotControl.motorDriver.setSpeed(0,0);
+		for(int i = 0; i<1000; i++){
+			robotControl.motorDriver.startMove();
+			vTaskDelay(1 / portTICK_PERIOD_MS);
+		}
+	}
     proceed();
 }
 
 // deposit_big_boxes - Making deposits, but sadly not in your bank account. Or mine.
 // State Number 7
 // Current Max Time 3 seconds
+//TODO: Implement Deposit Big Boxes
 void RobotStateController::deposit_big_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskSuspend( readDetTaskHandle );
@@ -409,6 +546,7 @@ void RobotStateController::deposit_big_boxes() {
 // deposit_small_boxes - Because every box deserves a home
 // State Number 5
 // Current Max Time 3 seconds
+//TODO: Implement Deposit Small Boxes
 void RobotStateController::deposit_small_boxes() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskSuspend( readDetTaskHandle );
@@ -421,6 +559,7 @@ void RobotStateController::deposit_small_boxes() {
 // go_to_red_zone - Red: The color of urgency (or tomatoes)
 // State Number 4
 // Current Max Time 4 seconds
+//TODO: Use turnTo and moveTo to go to red zone
 void RobotStateController::go_to_red_zone() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskResume( readDetTaskHandle );
@@ -435,6 +574,7 @@ void RobotStateController::go_to_red_zone() {
 // go_to_blue_zone - Feeling blue? Head here
 // State Number 6
 // Current Max Time 2 seconds
+//TODO: Use turnTo and moveTo to go to blue zone
 void RobotStateController::go_to_blue_zone() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskResume( readDetTaskHandle );
@@ -447,6 +587,7 @@ void RobotStateController::go_to_blue_zone() {
 // go_to_green_zone - The eco-friendly zone
 // State Number 9
 // Current Max Time 3 seconds
+//TODO: Use turnTo and moveTo to go to green zone
 void RobotStateController::go_to_green_zone() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     vTaskResume( readDetTaskHandle );
@@ -461,6 +602,7 @@ void RobotStateController::go_to_green_zone() {
 // Credit for this one goes to one of my T-shirts.
 // State Number 10
 // Current Max Time 10 seconds
+//TODO: Use turnTo and moveTo to get rockets
 void RobotStateController::get_rockets() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.println("In Task");
@@ -471,6 +613,7 @@ void RobotStateController::get_rockets() {
 // deposit_rockets - One small step for gravity. One big leap for our robot.
 // State Number 14
 // Current Max Time 16 seconds
+//TODO: Align with nozzles. Deposit Rockets
 void RobotStateController::deposit_rockets() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
@@ -483,6 +626,7 @@ void RobotStateController::deposit_rockets() {
 // cross_gap - Mind the gap!
 // State Number 12
 // Current Max Time 16 seconds
+//TODO: Cross the Gap
 void RobotStateController::cross_gap() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.println("In Task");
@@ -494,6 +638,7 @@ void RobotStateController::cross_gap() {
 // display_logo - Time for a commercial break
 // State Number 5
 // Current Max Time 2 seconds
+//TODO: Display Logo
 void RobotStateController::display_logo() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.println("In Task");
@@ -505,6 +650,7 @@ void RobotStateController::display_logo() {
 // No, it won't launch missiles... I think.
 // State Number 16
 // Current Max Time 3 seconds
+//TODO: Use turnTo and moveTo to go to and push button
 void RobotStateController::push_button() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.println("In Task");

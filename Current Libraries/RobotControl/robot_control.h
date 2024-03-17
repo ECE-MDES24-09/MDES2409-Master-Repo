@@ -4,7 +4,8 @@
 #define MAX_ANGLE 70.0
 #define SPEED_MULTIPLIER 1.0
 #define ROLLER_MULTIPLIER 1.0
-
+#define TRIG_PIN 26
+#define ECHO_PIN 27
 
 #include "Arduino.h"
 #include <Servo.h>
@@ -54,7 +55,7 @@ public:
 	
 	int ColorSensor();
 	int GetDist();
-	int GetAngle();
+	int GetPixyAngle();
 	void test();
 	void turn(float Turn);
 	void followHeading(float Direction);
@@ -91,6 +92,7 @@ public:
 
 	void printStates();
 	**/
+	Servo myservo;
 	void servo_write();
 
 private:
@@ -117,7 +119,7 @@ private:
 	int8_t lastDataReceived3 = -1; // To track the last state of dataRecieved[3]
 	int8_t lastDataReceived4 = -1; // To track the last state of dataRecieved[4]
 	
-	Servo myservo;
+
 
 	int storageCycleStep = 0;
 

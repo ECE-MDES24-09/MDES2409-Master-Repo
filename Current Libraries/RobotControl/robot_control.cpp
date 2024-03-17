@@ -11,6 +11,8 @@ void RobotControl::init() {
     manipulatorControl.init();
     myservo.attach(RC_STORAGE_SERVO_PIN);
     pinMode(sensorPin, INPUT);
+    pinMode(TRIG_PIN, INPUT);
+    pinMode(ECHO_PIN, INPUT);
 }
 
 
@@ -28,7 +30,7 @@ int RobotControl::GetDist() {
     //return TMPFront.getDist();
 }
 
-int RobotControl::GetAngle() {
+int RobotControl::GetPixyAngle() {
     return lineDetect.getAng(MAX_ANGLE);
 }
 

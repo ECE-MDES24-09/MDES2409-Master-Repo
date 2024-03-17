@@ -1,7 +1,7 @@
 //
 // Created by jorda on 03/15/2024.
 //
-
+//TODO: Integrate Timing and Timeouts
 #ifndef ROBOTSTATECONTROLLER_H
 #define ROBOTSTATECONTROLLER_H
 
@@ -20,9 +20,12 @@ class RobotStateController;
 // Move Around Board Run
 constexpr int NUM_STATES = 9;
 const int lightSensorPin = A12;
-const int threshold = 160;
+const int threshold = 260;
 
 
+
+//TODO: Integrate with states, update function, or Motorbox Task in
+// RobotCode.ino to implement Event-Driven State Machine for Timeouts
 // Enum for different event states
 enum Event {
     START_EVENT,
@@ -48,7 +51,8 @@ enum RobotState {
     PUSH_BUTTON,
     DISPLAY_LOGO,
     DONE,
-    EMERGENCY_STOP
+    EMERGENCY_STOP,
+    FIND_LINE
   };
 
 
@@ -178,19 +182,19 @@ public:
     void proceed();
     void goBack();
     void reset();
-	void init();
+    void init();
     void turnRight();
     void turnLeft();
+    void findLine();
+    void moveToDetection(Detection detection);
+    void moveForward(float distanceToMove);
     void turnTo(Detection detection);
+    void moveTo(Detection detection);
+    float calculateDistanceToMove(float dist_mm);
     TaskHandle_t readDetTaskHandle{};
     TaskHandle_t processDetTaskHandle{};
     EventGroupHandle_t xDetectionsEventGroup{};
 
 };
-
-
-
-
-
 
 #endif //ROBOTSTATECONTROLLER_H
