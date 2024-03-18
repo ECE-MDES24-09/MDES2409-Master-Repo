@@ -46,8 +46,8 @@ void setup() {
     class_names_dict.jload(class_json);
     class_names_rev.jload(class_rev);
     // Wait for everything to stabilize
-    delay(150000); // Use this delay if starting at the same time as the Jetson
-    // delay(2000); // Use this delay if starting after Jetson is set up and has been running
+    // delay(150000); // Use this delay if starting at the same time as the Jetson
+    delay(2000); // Use this delay if starting after Jetson is set up and has been running
 
     PT_INIT(&ptRead);
     PT_INIT(&ptProcess);
@@ -67,7 +67,7 @@ static int protothreadRead(struct pt* pt) {
 
     while (1) {
         if (readDetectionsFlag) {
-          delay(50);
+          delay(5);
           Serial2.println("REQUEST");
           // Serial.println("REQUEST");
 
@@ -159,11 +159,6 @@ void parseDetection(char* detection) {
         class_key = atoi(token);
     }
 
-    token = strtok_r(rest, ",", &rest);
-    if (token != NULL) {
-        confidence = atof(token);
-    }
-
     // Continue for the rest of the fields
     token = strtok_r(rest, ",", &rest);
     if (token != NULL) {
@@ -179,16 +174,6 @@ void parseDetection(char* detection) {
     token = strtok_r(rest, ",", &rest);
     if (token != NULL) {
         x = atof(token);
-    }
-
-    token = strtok_r(rest, ",", &rest);
-    if (token != NULL) {
-        y = atof(token);
-    }
-
-    token = strtok_r(rest, ",", &rest);
-    if (token != NULL) {
-        z = atof(token);
     }
 
     token = strtok_r(rest, ",", &rest);
@@ -210,7 +195,7 @@ void parseDetection(char* detection) {
     class_n.toCharArray(class_name, MAX_DETECTION_LENGTH);
     dir_n.toCharArray(direction, 6);
 
-    Detection newDetection(class_name, confidence,timestamp, depth_mm, x, y, z, horizontal_angle, direction);
+    Detection newDetection(class_name, timestamp, depth_mm, x, horizontal_angle, direction);
 
     addDetectionToBuffer(newDetection);
 
@@ -240,18 +225,12 @@ void printDetection(const Detection& d) {
     if (strlen(d.class_name) > 0) { // Check if the detection is valid
         Serial.print("Class Name: ");
         Serial.println(d.class_name);
-        Serial.print("Confidence: ");
-        Serial.println(d.confidence, 2);
         Serial.print("Timestamp: ");
         Serial.println(d.timestamp, 2);
         Serial.print("Depth MM: ");
         Serial.println(d.depth_mm);
         Serial.print("X Component: ");
         Serial.println(d.x);
-        Serial.print("Y Component: ");
-        Serial.println(d.y);
-        Serial.print("Z Component: ");
-        Serial.println(d.z);
         Serial.print("Horizontal Angle: ");
         Serial.println(d.horizontal_angle);
         Serial.print("Direction: ");

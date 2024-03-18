@@ -4,11 +4,68 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c7632ae6-ecb1-4d46-a3ef-f9edc306a435" name="Changes" comment="" />
+    <list default="true" id="c7632ae6-ecb1-4d46-a3ef-f9edc306a435" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Jetson Code/GameObjDetector" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/NoMaskFoundException.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/detectionClass.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/gpio_listener.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/gpio_listener.service" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/objdetclass.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/realsense_obj.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/args.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/events.out.tfevents.1702074450.mdelab-MS-7C91.260644.0" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/labels.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/labels_correlogram.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/results.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/train_batch0.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/train_batch1.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/train_batch2.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/weights/best.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Jetson Code/Old/train11/weights/last.pt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/NoMaskFoundException.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/detectionClass.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/objdetclass.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/realsense_obj.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/args.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/events.out.tfevents.1702074450.mdelab-MS-7C91.260644.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/labels.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/labels_correlogram.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/results.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/train_batch0.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/train_batch1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/train_batch2.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/weights/best.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Jetson Code/train11/weights/last.pt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Old Code/ArduinoSide3-MegaVersion/ArduinoSide3-MegaVersion.ino" beforeDir="false" afterPath="$PROJECT_DIR$/Old Code/ArduinoSide3-MegaVersion/ArduinoSide3-MegaVersion.ino" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RobotCode/RobotCode.ino" beforeDir="false" afterPath="$PROJECT_DIR$/RobotCode/RobotCode.ino" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FlaskConsoleOptions" custom-start-script="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))">
+    <envs>
+      <env key="FLASK_APP" value="app" />
+    </envs>
+    <option name="myCustomStartScript" value="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))" />
+    <option name="myEnvs">
+      <map>
+        <entry key="FLASK_APP" value="app" />
+      </map>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -20,6 +77,9 @@
   &quot;associatedIndex&quot;: 5
 }</component>
   <component name="ProjectId" id="2dnxaHNi2I3crL7V0AGUROQ8DuU" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -27,14 +87,17 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "dart.analysis.tool.window.visible": "false",
+    "last_opened_file_path": "C:/Users/jorda/Documents/MLHW3/HW3",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PythonContentEntriesConfigurable",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -59,10 +122,15 @@
       <updated>1710657709199</updated>
       <workItem from="1710657710824" duration="714000" />
       <workItem from="1710699047540" duration="593000" />
+      <workItem from="1710708480213" duration="268000" />
+      <workItem from="1710708750639" duration="2619000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
   </component>
 </project>

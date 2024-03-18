@@ -1,0 +1,12 @@
+[Unit]
+Description=GPIO Listener Service
+After=multi-user.target
+
+[Service]
+Type=simple
+User=jetson
+ExecStart=/usr/bin/python3 /home/jetson/gpio_listener.py
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

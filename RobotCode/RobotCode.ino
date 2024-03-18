@@ -132,16 +132,12 @@ void setup() {
   Serial.println("Setup");
   // Creating our cast of tasks - it's like a talent show, but with more crashing
   xTaskCreate(MotorBoxStateManagement, "MotorBoxStateManagement", 1000, NULL, 3, &MotorBoxTaskHandle);
-  xTaskCreate(SensorBox, "SensorBox", 128, NULL, 4, &SensorBoxTaskHandle);
+  //xTaskCreate(SensorBox, "SensorBox", 128, NULL, 4, &SensorBoxTaskHandle);
   xTaskCreate(readDetTask, "readDetTask", 500, NULL, 2, &stateMachine.readDetTaskHandle);
   xTaskCreate(processDetTask, "processDetTask", 500, NULL, 1, &stateMachine.processDetTaskHandle);
-
-  if (debugMode) {
-    xTaskCreate(DebugBox, "DebugBox", 200, NULL, 5, &debugTaskHandle);
-   }
+  //xTaskCreate(DebugBox, "DebugBox", 128, NULL, 5, &debugTaskHandle);
   
   Serial.println("Setup 2");
-  vTaskStartScheduler();
 
   // For those who like to live dangerously: Uncomment these lines at your own risk.
   // I mean, what could possibly go wrong?
@@ -283,8 +279,8 @@ void DebugBox(void *pvParameters) {
         // vTaskDelay(pdMS_TO_TICKS(2000)); // FreeRTOS delay
         eTaskState readtaskState = eTaskGetState(stateMachine.readDetTaskHandle);
         eTaskState processtaskState = eTaskGetState(stateMachine.processDetTaskHandle);
-        // Serial.println(readtaskState);
-        // Serial.println(processtaskState);
+        Serial.println(readtaskState);
+        Serial.println(processtaskState);
 
         if ((readtaskState <= 2) || (processtaskState <= 2)){
           Serial.println("DETECTIONS ON");
