@@ -5,16 +5,16 @@
 
 void RobotControl::init() {
     //Gyro.init();
-    TMPFront.init(SerialSelect::S0);
-    motorDriver.init();
+    //TMPFront.init(SerialSelect::S0);
     lineDetect.init();
     manipulatorControl.init();
     myservo.attach(RC_STORAGE_SERVO_PIN);
-    pinMode(sensorPin, INPUT);
-    pinMode(TRIG_PIN, INPUT);
-    pinMode(ECHO_PIN, INPUT);
 }
 
+
+void RobotControl::theGobbler(int speed) {
+	manipulatorControl.feedTheBeast(speed);
+}
 
 /**
 
@@ -27,11 +27,24 @@ int RobotControl::ColorSensor() {
 }
 
 int RobotControl::GetDist() {
-    return TMPFront.getDist();
+    //return TMPFront.getDist();
 }
 
 int RobotControl::GetPixyAngle() {
     return lineDetect.getAng(MAX_ANGLE);
+}
+
+double RobotControl::USDistance(){
+	float distance_cm;
+	digitalWrite(TRIG_PIN, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(TRIG_PIN, LOW);
+
+	// measure duration of pulse from ECHO pin
+	distance_cm = pulseIn(ECHO_PIN, HIGH)*.017;
+
+
+	return distance_cm;
 }
 
 /**
@@ -107,21 +120,6 @@ void RobotControl::turn(float Turn) {
         motorDriver.startMove();
     }
 }
-
-double RobotControl::USDistance(){
-    float distance_cm;
-    digitalWrite(TRIG_PIN, HIGH);
-    delayMicroseconds(10);
-    digitalWrite(TRIG_PIN, LOW);
-
-    // measure duration of pulse from ECHO pin
-    distance_cm = pulseIn(ECHO_PIN, HIGH)*.017;
-
-
-    return distance_cm;
-}
-
-
 
 void RobotControl::followHeading(float Direction) {
     //float Angle = getGyroAng(); // gyro_red

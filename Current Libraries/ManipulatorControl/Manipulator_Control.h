@@ -4,16 +4,22 @@
 #include "Arduino.h"
 #include <Servo.h>
 
+#define INFEED_LEFT_PIN 8
+#define OUTFEED_LEFT_PIN 9
+#define INFEED_RIGHT_PIN 10
+#define OUTFEED_RIGHT_PIN 11
+
+
+
 class Manipulator_Control {
 public:
     void init();
     void setStorageAngle(float angle, float speedFactor); // Function to set storage angle with speed control
     void setLeftRollerSpeed(int speed); // Function to set left roller speed
     void setRightRollerSpeed(int speed); // Function to set right roller speed
-
+	void feedManipulator(int speed);
     const int STORAGE_SERVO_PIN = 12;
-    const int LEFT_ROLLER_SERVO_PIN = 10; // Example pin for left roller servo
-    const int RIGHT_ROLLER_SERVO_PIN = 11; // Example pin for right roller servo
+	void feedTheBeast(int speed);
 
 private:
 

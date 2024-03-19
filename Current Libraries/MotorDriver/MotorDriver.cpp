@@ -3,14 +3,6 @@
 //
 #include "MotorDriver.h"
 
-void MotorDriver::init() {
-    pinMode(RIGHT_FORWARD_PIN, INPUT);
-    pinMode(RIGHT_BACKWARD_PIN, INPUT);
-    pinMode(LEFT_FORWARD_PIN, INPUT);
-    pinMode(LEFT_BACKWARD_PIN, INPUT);
-
-}
-
 void MotorDriver::setSpeed(int targetLeftSpeed, int targetRightSpeed) {
     this->targetLeftSpeed = targetLeftSpeed;
     this->targetRightSpeed = targetRightSpeed;

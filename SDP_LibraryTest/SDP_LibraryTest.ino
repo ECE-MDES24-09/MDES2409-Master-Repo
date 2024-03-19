@@ -32,9 +32,9 @@ void loop() {
     FollowLine();
 
     //Spit out cubes
-    rc.motorDriver.Infeed(-200);
+    rc.theGobbler(-200);
     delay(2000);
-    rc.motorDriver.Infeed(0);
+    rc.theGobbler(0);
 
     TurnLeft90();
     FollowLine();
@@ -98,7 +98,7 @@ void loop() {
 void PickUpCubes(){
 
   rc.myservo.write(127);
-  rc.motorDriver.Infeed(1);
+  rc.theGobbler(1);
 
   for(int i = 0; i<2; i++){
     rc.motorDriver.setSpeed(50,50);
@@ -155,7 +155,7 @@ void PickUpCubes(){
     }
 
     rc.myservo.write(115);
-    rc.motorDriver.Infeed(0);
+    rc.theGobbler(0);
 
     rc.motorDriver.setSpeed(0,0);
 		for(int i = 0; i<500; i++){

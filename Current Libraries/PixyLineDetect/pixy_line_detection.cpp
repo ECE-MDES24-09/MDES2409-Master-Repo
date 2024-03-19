@@ -2,8 +2,8 @@
 
 
  void PixyLineDetect::init() {
-	//pixy.init();
-	//Serial.println(pixy.changeProg("line"));
+	pixy.init();
+	Serial.println(pixy.changeProg("line"));
 }
 
 void PixyLineDetect::update() {

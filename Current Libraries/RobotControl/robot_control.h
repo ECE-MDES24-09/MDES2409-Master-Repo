@@ -13,8 +13,8 @@
 #include <pixy_line_detection.h>
 #include <serial_communication.h>
 
-#include <gyro_blue.h>
-#include <TMP.h>
+//#include <gyro_blue.h>
+//#include <TMP.h>
 #include "Manipulator_Control.h"
 
 
@@ -49,20 +49,21 @@ public:
 	//TMP TMPFront;
 	//Gyro Gyro;
 
-	const int sensorPin = A12;
+	const int sensorPin = A12; 
 	
 	void init();
 	
 	int ColorSensor();
 	int GetDist();
 	int GetPixyAngle();
+	void theGobbler(int speed);
 	void test();
 	void turn(float Turn);
 	void followHeading(float Direction);
 	void lineFollow(int robotSpeed, double targetOffset);
 	void crossGap();
 
-	double USDistance();
+
 	void connectionCheck();
 	void updateSerialInput();
 	void rollersIntake();
@@ -70,6 +71,7 @@ public:
 	void rollersStop();
 	void rocketDrop();
 	void cruisin();
+	double USDistance();
 
 
 	/**
@@ -119,7 +121,6 @@ private:
 	int8_t lastDataReceived3 = -1; // To track the last state of dataRecieved[3]
 	int8_t lastDataReceived4 = -1; // To track the last state of dataRecieved[4]
 	
-
 
 	int storageCycleStep = 0;
 

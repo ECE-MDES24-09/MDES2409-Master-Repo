@@ -3,8 +3,7 @@
 // Initialize the manipulator control (attach servos)
 void Manipulator_Control::init() {
     storageServo.attach(STORAGE_SERVO_PIN);
-    leftRollerServo.attach(LEFT_ROLLER_SERVO_PIN);
-    rightRollerServo.attach(RIGHT_ROLLER_SERVO_PIN);
+
 }
 
 // Set the angle for the storage servo with speed control
@@ -21,6 +20,19 @@ void Manipulator_Control::setLeftRollerSpeed(int speed) {
 // Set speed for the right roller servo
 void Manipulator_Control::setRightRollerSpeed(int speed) {
     rightRollerServo.writeMicroseconds(map(speed, -100, 100, 2000, 1000)); // Assuming speed range is -100 to 100
+}
+
+void Manipulator_Control::feedTheBeast(int speed) {
+	if(speed > 0){
+			analogWrite(INFEED_LEFT_PIN, speed);
+			analogWrite(INFEED_RIGHT_PIN, speed);
+
+	}
+	if(speed < 0){
+			analogWrite(OUTFEED_LEFT_PIN, speed);
+			analogWrite(OUTFEED_RIGHT_PIN, speed);
+
+	}
 }
 
 // Update the angle of the storage servo gradually
