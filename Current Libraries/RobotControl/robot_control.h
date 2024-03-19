@@ -12,10 +12,10 @@
 #include <MotorDriver.h>
 #include <pixy_line_detection.h>
 #include <serial_communication.h>
-
+#include "Manipulator_Control.h"
 //#include <gyro_blue.h>
 //#include <TMP.h>
-#include "Manipulator_Control.h"
+
 
 
 // Counter and compare values
@@ -49,7 +49,7 @@ public:
 	//TMP TMPFront;
 	//Gyro Gyro;
 
-	const int sensorPin = A12; 
+	const int sensorPin = 12; 
 	
 	void init();
 	
@@ -112,7 +112,7 @@ private:
 	float storageAng = 0.0f;
 	float storageRotateSpeed = 0.1f; // degree per loop
 	float CubeDropAng = 115.0f;
-	float pickUpAng = 115.0f;
+	float pickUpAng = 125.0f;
 	float crusinAng = 90.0f;
 	float fuelDropAng = 75.0f;
 

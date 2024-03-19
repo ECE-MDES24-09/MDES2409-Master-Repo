@@ -3,6 +3,15 @@
 //
 #include "MotorDriver.h"
 
+
+void MotorDriver::init() {
+    pinMode(RIGHT_FORWARD_PIN, OUTPUT);
+    pinMode(RIGHT_BACKWARD_PIN, OUTPUT);
+    pinMode(LEFT_FORWARD_PIN, OUTPUT);
+    pinMode(LEFT_BACKWARD_PIN, OUTPUT);
+
+}
+
 void MotorDriver::setSpeed(int targetLeftSpeed, int targetRightSpeed) {
     this->targetLeftSpeed = targetLeftSpeed;
     this->targetRightSpeed = targetRightSpeed;
@@ -40,7 +49,7 @@ void MotorDriver::startMove() {
         analogWrite(LEFT_BACKWARD_PIN, -leftSpeed);
     }
 
-    delay(1);  // I don't like this. don't use delay, possible solution: timer, multi-threading (unlikely)
+    //delay(1);  // I don't like this. don't use delay, possible solution: timer, multi-threading (unlikely)
 }
 
 void MotorDriver::FollowLine(int right, int left, double angle, double offset) {

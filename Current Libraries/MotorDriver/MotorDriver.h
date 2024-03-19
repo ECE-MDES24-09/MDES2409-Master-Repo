@@ -14,7 +14,7 @@
 class MotorDriver {
 
 public:
-
+	void init();
 	void setSpeed(int targetLeftSpeed, int targetRightSpeed);
 	void startMove();
 	void FollowLine(int right, int left, double angle, double offset);

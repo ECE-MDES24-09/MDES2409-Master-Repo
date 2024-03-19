@@ -189,7 +189,7 @@ void RobotStateController::reset() {
     setState(&states[0]);
 }
 void RobotStateController::init() {
-    robotControl.init();
+    rc.init();
 }
 
 State *RobotStateController::getPrevState() {
@@ -301,10 +301,11 @@ void RobotStateController::wait_for_start() {
     int lightSensorValue = analogRead(lightSensorPin);
     Serial.print("Light Sensor Value: ");
     Serial.println(lightSensorValue);
-    while (lightSensorValue > threshold) {
-        lightSensorValue = analogRead(lightSensorPin);
-        Serial.print("Light Sensor Value: ");
-        Serial.println(lightSensorValue);
+    int start = rc.ColorSensor();
+    while (lightSensorValue > threshold || start-20<rc.ColorSensor()) {
+        //lightSensorValue = analogRead(lightSensorPin);
+        //Serial.print("Light Sensor Value: ");
+        //Serial.println(lightSensorValue);
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
     proceed();
@@ -314,12 +315,15 @@ void RobotStateController::wait_for_start() {
 // State Number 1
 // Current Max Time 10 seconds
 void RobotStateController::get_big_boxes() {
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-    vTaskResume( readDetTaskHandle );
-    vTaskResume( processDetTaskHandle );
+
     Serial.println("In Task");
-    xEventGroupSetBits(xDetectionsEventGroup, BIT_READ_DETECTIONS);
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    rc.myservo.write(127);
+    rc.theGobbler(1);
+    rc.motorDriver.setSpeed(150,150);
+    for(int i = 0; i<50; i++){
+        rc.motorDriver.startMove();
+    }
+
     proceed();
 }
 
@@ -343,7 +347,7 @@ void RobotStateController::follow_line() {
     vTaskSuspend( readDetTaskHandle );
     vTaskSuspend( processDetTaskHandle );
     Serial.println("In Task");
-    robotControl.lineFollow(200, 70);
+    rc.lineFollow(200, 70);
     //vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
 }
@@ -441,7 +445,7 @@ void RobotStateController::deposit_rockets() {
 void RobotStateController::cross_gap() {
     vTaskDelay(100 / portTICK_PERIOD_MS);
     Serial.println("In Task");
-    robotControl.crossGap();
+    rc.crossGap();
     //vTaskDelay(2000 / portTICK_PERIOD_MS);
     proceed();
 }

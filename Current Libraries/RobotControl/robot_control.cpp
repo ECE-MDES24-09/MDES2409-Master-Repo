@@ -13,6 +13,7 @@ void RobotControl::init() {
 
 
 void RobotControl::theGobbler(int speed) {
+    manipulatorControl.setStorageAngle(pickUpAng, 0.3);
 	manipulatorControl.feedTheBeast(speed);
 }
 

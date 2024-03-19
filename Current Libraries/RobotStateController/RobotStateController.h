@@ -16,9 +16,9 @@
 // Include other necessary headers...
 class RobotStateController;
 // Full Run
-//constexpr int NUM_STATES = 19;
+constexpr int NUM_STATES = 19;
 // Move Around Board Run
-constexpr int NUM_STATES = 9;
+//constexpr int NUM_STATES = 9;
 const int lightSensorPin = A0;
 const int threshold = 160;
 
@@ -92,11 +92,11 @@ struct State {
 
 class RobotStateController {
 private:
-    RobotControl robotControl{};
+    RobotControl rc{};
     State* robotCurrentState{};
     State* robotPrevState{};
     State* robotNextState{};
-    /**
+
     // States for Full Run
     State states[NUM_STATES] = {
         {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
@@ -119,8 +119,8 @@ private:
         {State(DONE, 3, &RobotStateController::done, &states[16], &states[0])}, // 17
         {State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr)}, // 18
     };
-    **/
 
+    /**
     // Move around Board Run
     State states[NUM_STATES] = {
         {State(WAIT_FOR_START, 0, &RobotStateController::wait_for_start, nullptr, &states[1])}, // 0
@@ -136,6 +136,7 @@ private:
         {State(DONE, 3, &RobotStateController::done, &states[6], &states[0])}, // 7
         {State(EMERGENCY_STOP, 0, &RobotStateController::emergency_stop, nullptr, nullptr)}, // 8
     };
+    **/
 
     // State handling methods
     void wait_for_start();
